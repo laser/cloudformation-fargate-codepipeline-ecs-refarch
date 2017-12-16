@@ -139,3 +139,6 @@ Outputs:
     StackName:
         Description: The name of the created stack
         Value: !Ref AWS::StackName
+    ServiceArn:
+            Description: The ARN of the created service
+            Value: !Ref Service
