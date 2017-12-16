@@ -68,6 +68,7 @@ Resources:
         Properties:
             TemplateURL: !Sub ${S3TemplateKeyPrefix}service.yml
             Parameters:
+                EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 DesiredCount: 2

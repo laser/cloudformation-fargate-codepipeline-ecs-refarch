@@ -1,5 +1,5 @@
 Description: >
-    This is an example of a long running ECS service that serves a JSON API of products.
+    This is an example of a long running ECS service that responds to HTTP requests with a single word.
 
 Parameters:
 
@@ -24,6 +24,10 @@ Parameters:
         Description: The path to register with the Application Load Balancer
         Type: String
         Default: /
+
+    EnvironmentName:
+        Description: An environment name that will be prefixed to (or used to create) resource names
+        Type: String
 
 Resources:
 
@@ -50,7 +54,7 @@ Resources:
                     - Name: PORT
                       Value: 4444
                   Essential: true
-                  Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}:latest
+                  Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EnvironmentName}:latest
                   Memory: 50
                   PortMappings:
                     - ContainerPort: 4444
@@ -111,22 +115,22 @@ Resources:
                 }
             Policies:
                 - PolicyName: !Sub ecs-service-${AWS::StackName}
-                  PolicyDocument:
-                    {
-                        "Version": "2012-10-17",
-                        "Statement": [{
-                                "Effect": "Allow",
-                                "Action": [
-                                    "ec2:AuthorizeSecurityGroupIngress",
-                                    "ec2:Describe*",
-                                    "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                                    "elasticloadbalancing:Describe*",
-                                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                                    "elasticloadbalancing:DeregisterTargets",
-                                    "elasticloadbalancing:DescribeTargetGroups",
-                                    "elasticloadbalancing:DescribeTargetHealth",
-                                    "elasticloadbalancing:RegisterTargets"
-                                ],
-                                "Resource": "*"
-                        }]
-                    }
+                  PolicyDocument: |
+                      {
+                          "Version": "2012-10-17",
+                          "Statement": [{
+                                  "Effect": "Allow",
+                                  "Action": [
+                                      "ec2:AuthorizeSecurityGroupIngress",
+                                      "ec2:Describe*",
+                                      "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                                      "elasticloadbalancing:Describe*",
+                                      "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                                      "elasticloadbalancing:DeregisterTargets",
+                                      "elasticloadbalancing:DescribeTargetGroups",
+                                      "elasticloadbalancing:DescribeTargetHealth",
+                                      "elasticloadbalancing:RegisterTargets"
+                                  ],
+                                  "Resource": "*"
+                          }]
+                      }

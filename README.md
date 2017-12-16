@@ -38,3 +38,13 @@ aws cloudformation create-stack --stack-name $ENV_NAME \
     --template-body file://./cloud-formation/master.yml \
     --parameters "ParameterKey=S3TemplateKeyPrefix,ParameterValue=https://s3.amazonaws.com/$ENV_NAME/template-storage/"
 ```
+
+### Update the Stack
+
+```
+aws cloudformation update-stack --stack-name $ENV_NAME \
+    --capabilities CAPABILITY_NAMED_IAM CAPABILITY_IAM \
+    --template-body file://./cloud-formation/master.yml \
+    --parameters "ParameterKey=S3TemplateKeyPrefix,ParameterValue=https://s3.amazonaws.com/$ENV_NAME/template-storage/"
+
+```
