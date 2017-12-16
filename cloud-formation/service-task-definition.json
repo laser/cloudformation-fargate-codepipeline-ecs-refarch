@@ -1,0 +1,33 @@
+{
+    "Family": "helloworld-service",
+    "ContainerDefinitions": [
+        {
+            "Name": "helloworld-service",
+            "Environment": [
+                {
+                    "name": "PORT",
+                    "value": 4444
+                }
+            ],
+            "Essential": true,
+            "Image": "%IMAGE_TAG%",
+            "Memory": 50,
+            "PortMappings": [
+                {
+                    "ContainerPort": 4444
+                }
+            ],
+            "LogConfiguration": {
+                "LogDriver": "awslogs",
+                "Options": {
+                    "awslogs-group": {
+                        "STACK_NAME": "%STACK_NAME%"
+                    },
+                    "awslogs-region": {
+                        "REGION": "%AWSLOGS_REGION%"
+                    }
+                }
+            }
+        }
+    ]
+}

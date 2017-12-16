@@ -3,6 +3,11 @@
 Provision an ECS cluster (and related infrastructure) with CloudFormation, 
 updating services with new tasks created by CircleCI
 
+## 0. Tools and Dependencies
+
+- [AWS CLI](https://github.com/aws/aws-cli), for interacting with AWS
+- [jq](https://github.com/stedolan/jq), for querying stack output-JSON
+
 ## 1. Provision ECR and S3
 
 ```
@@ -78,3 +83,4 @@ aws cloudformation update-stack --stack-name your-app-name-here \
 - [ ] create bastion instance for SSH
 - [x] how do i check out the logs?
 - [ ] add some stuff to app to help differentiate user versus healthcheck requests
+- [ ] blast a million requests at load balancer to see if it does rolling deploys

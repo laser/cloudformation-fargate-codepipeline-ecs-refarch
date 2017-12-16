@@ -79,3 +79,6 @@ Outputs:
     ProductServiceUrl:
         Description: The URL endpoint for the helloworld service
         Value: !GetAtt ALB.Outputs.LoadBalancerUrl
+    HelloworldServiceStackName:
+        Description: The name of the stack containing our Helloworld Service
+        Value: !GetAtt HelloworldService.Outputs.StackName

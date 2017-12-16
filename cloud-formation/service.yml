@@ -134,3 +134,8 @@ Resources:
                                   "Resource": "*"
                           }]
                       }
+
+Outputs:
+    StackName:
+        Description: The name of the created stack
+        Value: !Ref AWS::StackName
