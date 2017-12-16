@@ -1,5 +1,5 @@
 Description: >
-    This template deploys an ECS cluster to the provided VPC and subnets 
+    This template deploys an ECS cluster to the provided VPC and subnets
     using an Auto Scaling Group
 
 Parameters:
@@ -8,7 +8,7 @@ Parameters:
         Description: An environment name that will be prefixed to resource names
         Type: String
 
-    InstanceType: 
+    InstanceType:
         Description: Which instance type should we use to build the ECS cluster?
         Type: String
         Default: c4.large
@@ -41,7 +41,7 @@ Mappings:
     #
     # You can find the latest available on this page of our documentation:
     # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
-    # (note the AMI identifier is region specific) 
+    # (note the AMI identifier is region specific)
 
     AWSRegionToAMI:
         us-east-2:
@@ -76,18 +76,18 @@ Resources:
 
     ECSAutoScalingGroup:
         Type: AWS::AutoScaling::AutoScalingGroup
-        Properties: 
+        Properties:
             VPCZoneIdentifier: !Ref Subnets
             LaunchConfigurationName: !Ref ECSLaunchConfiguration
             MinSize: !Ref ClusterSize
             MaxSize: !Ref ClusterSize
             DesiredCapacity: !Ref ClusterSize
-            Tags: 
+            Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName} ECS host
                   PropagateAtLaunch: true
         CreationPolicy:
-            ResourceSignal: 
+            ResourceSignal:
                 Timeout: PT15M
         UpdatePolicy:
             AutoScalingRollingUpdate:
@@ -101,16 +101,16 @@ Resources:
                   - AlarmNotification
                   - ScheduledActions
                 WaitOnResourceSignals: true
-        
+
     ECSLaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
         Properties:
             ImageId:  !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
             InstanceType: !Ref InstanceType
-            SecurityGroups: 
+            SecurityGroups:
                 - !Ref SecurityGroup
             IamInstanceProfile: !Ref ECSInstanceProfile
-            UserData: 
+            UserData:
                 "Fn::Base64": !Sub |
                     #!/bin/bash
                     yum install -y aws-cfn-bootstrap
@@ -132,7 +132,7 @@ Resources:
                                 [main]
                                 stack=${AWS::StackId}
                                 region=${AWS::Region}
-                        
+
                         "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
                             content: !Sub |
                                 [cfn-auto-reloader-hook]
@@ -140,12 +140,12 @@ Resources:
                                 path=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init
                                 action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
 
-                    services: 
+                    services:
                         sysvinit:
-                            cfn-hup: 
+                            cfn-hup:
                                 enabled: true
                                 ensureRunning: true
-                                files: 
+                                files:
                                     - /etc/cfn/cfn-hup.conf
                                     - /etc/cfn/hooks.d/cfn-auto-reloader.conf
 
@@ -159,7 +159,7 @@ Resources:
 
     ECSRole:
         Type: AWS::IAM::Role
-        Properties: 
+        Properties:
             Path: /
             RoleName: !Sub ${EnvironmentName}-ECSRole-${AWS::Region}
             AssumeRolePolicyDocument: |
@@ -167,41 +167,41 @@ Resources:
                     "Statement": [{
                         "Action": "sts:AssumeRole",
                         "Effect": "Allow",
-                        "Principal": { 
-                            "Service": "ec2.amazonaws.com" 
+                        "Principal": {
+                            "Service": "ec2.amazonaws.com"
                         }
                     }]
                 }
-            Policies: 
+            Policies:
                 - PolicyName: ecs-service
                   PolicyDocument: |
-                    {
-                        "Statement": [{
-                            "Effect": "Allow",
-                            "Action": [
-                                "ecs:CreateCluster",
-                                "ecs:DeregisterContainerInstance",
-                                "ecs:DiscoverPollEndpoint",
-                                "ecs:Poll",
-                                "ecs:RegisterContainerInstance",
-                                "ecs:StartTelemetrySession",
-                                "ecs:Submit*",
-                                "logs:CreateLogStream",
-                                "logs:PutLogEvents",
-                                "ecr:BatchCheckLayerAvailability",
-                                "ecr:BatchGetImage",
-                                "ecr:GetDownloadUrlForLayer",
-                                "ecr:GetAuthorizationToken"
-                            ],
-                            "Resource": "*"
-                        }]
-                    }
+                      {
+                          "Statement": [{
+                              "Effect": "Allow",
+                              "Action": [
+                                  "ecs:CreateCluster",
+                                  "ecs:DeregisterContainerInstance",
+                                  "ecs:DiscoverPollEndpoint",
+                                  "ecs:Poll",
+                                  "ecs:RegisterContainerInstance",
+                                  "ecs:StartTelemetrySession",
+                                  "ecs:Submit*",
+                                  "logs:CreateLogStream",
+                                  "logs:PutLogEvents",
+                                  "ecr:BatchCheckLayerAvailability",
+                                  "ecr:BatchGetImage",
+                                  "ecr:GetDownloadUrlForLayer",
+                                  "ecr:GetAuthorizationToken"
+                              ],
+                              "Resource": "*"
+                          }]
+                      }
 
-    ECSInstanceProfile: 
+    ECSInstanceProfile:
         Type: AWS::IAM::InstanceProfile
         Properties:
             Path: /
-            Roles: 
+            Roles:
                 - !Ref ECSRole
 
 Outputs:
