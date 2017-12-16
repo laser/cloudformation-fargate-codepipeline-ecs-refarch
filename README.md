@@ -68,10 +68,13 @@ aws cloudformation update-stack --stack-name your-app-name-here \
 ## TODO
 
 - [ ] get rid of the multi-region load balancing stuff
-- [ ] domain name?
+- [ ] domain name? Route53
 - [ ] Fargate?
 - [ ] when to use default VPC? When to create new one?
 - [ ] SSL
 - [ ] RDS
 - [ ] update app to use a database (use `word` to create a new migration)
-- [ ] Migrationsß
+- [ ] migrations ??
+- [ ] create bastion instance for SSH
+- [x] how do i check out the logs?
+- [ ] add some stuff to app to help differentiate user versus healthcheck requests
