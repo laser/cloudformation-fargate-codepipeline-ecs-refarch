@@ -1,8 +1,8 @@
 {
-    "family": "helloworld-service",
+    "family": "web-service",
     "containerDefinitions": [
         {
-            "name": "helloworld-service",
+            "name": "web-service",
             "environment": [
                 {
                     "name": "PORT",

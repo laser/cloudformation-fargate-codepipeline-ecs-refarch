@@ -1,5 +1,6 @@
 Description: >
-    This is an example of a long running ECS service that responds to HTTP requests with a single word.
+    This is an example of a long running ECS service that responds to HTTP
+    requests with a single word.
 
 Parameters:
 
@@ -7,12 +8,9 @@ Parameters:
         Description: The VPC that the ECS cluster is deployed to
         Type: AWS::EC2::VPC::Id
 
-    Cluster:
-        Description: Please provide the ECS Cluster ID that this service should run on
-        Type: String
-
     DesiredCount:
-        Description: How many instances of this task should we run across our cluster?
+        Description: >
+            How many instances of this task should we run across our cluster?
         Type: Number
         Default: 2
 
@@ -26,18 +24,28 @@ Parameters:
         Default: /
 
     EnvironmentName:
-        Description: An environment name that will be prefixed to (or used to create) resource names
+        Description: >
+            An environment name that will be prefixed to (or used to create)
+            resource names
         Type: String
 
     Subnets:
-        Description: Choose which subnets the Application Load Balancer should be deployed to
+        Description: >
+            Choose which subnets the Application Load Balancer should be
+            deployed to
         Type: List<AWS::EC2::Subnet::Id>
 
     SecurityGroup:
-        Description: Select a security group which permits access to the ECS tasks
+        Description: >
+            Select a security group which permits access to the ECS tasks
         Type: AWS::EC2::SecurityGroup::Id
 
 Resources:
+
+    Cluster:
+        Type: AWS::ECS::Cluster
+        Properties:
+            ClusterName: !Ref EnvironmentName
 
     Service:
         Type: AWS::ECS::Service
@@ -55,7 +63,7 @@ Resources:
                         - !Ref SecurityGroup
 
             LoadBalancers:
-                - ContainerName: "helloworld-service"
+                - ContainerName: "web-service"
                   ContainerPort: 4444
                   TargetGroupArn: !Ref TargetGroup
 
@@ -64,14 +72,14 @@ Resources:
         Properties:
             TaskRoleArn: !GetAtt TaskExecutionRole.Arn
             ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
-            Cpu: 1024
-            Memory: 2048
-            Family: helloworld-service
+            Cpu: 256
+            Memory: 512
+            Family: web-service
             NetworkMode: awsvpc
             RequiresCompatibilities:
                 - FARGATE
             ContainerDefinitions:
-                - Name: helloworld-service
+                - Name: web-service
                   Environment:
                       - Name: PORT
                         Value: 4444
@@ -127,19 +135,19 @@ Resources:
                   Type: forward
 
     TaskExecutionRole:
-      Type: AWS::IAM::Role
-      Properties:
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-              - ecs-tasks.amazonaws.com
-            Action:
-            - sts:AssumeRole
-        ManagedPolicyArns:
-          - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                - Effect: Allow
+                  Principal:
+                      Service:
+                      - ecs-tasks.amazonaws.com
+                  Action:
+                  - sts:AssumeRole
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
 Outputs:
 
@@ -147,10 +155,10 @@ Outputs:
         Description: The name of the created stack
         Value: !Ref AWS::StackName
 
-    ServiceArn:
-        Description: The ARN of the created service
+    EcsServiceArn:
+        Description: A reference to the created ECS service ARN
         Value: !Ref Service
 
-    TaskExecutionRoleArn:
-        Description: The ARN of the role used with the TaskDefinition
+    EcsTaskExecutionRoleArn:
+        Description: A reference to the created IAM role ARN
         Value: !Ref TaskExecutionRole

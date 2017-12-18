@@ -8,3 +8,7 @@ get_stack_status () {
 stack_create_complete () {
     get_stack_status $1 | grep -m 1 "CREATE_COMPLETE" > /dev/null
 }
+
+stack_delete_complete () {
+    get_stack_status $1 | grep -m 1 "DELETE_COMPLETE" > /dev/null
+}

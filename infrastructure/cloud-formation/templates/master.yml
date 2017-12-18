@@ -5,8 +5,8 @@ Description: >
     route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ),
     and default routes for them in the private subnets.
 
-    It then deploys a highly available ECS cluster using an AutoScaling Group, with
-    ECS hosts distributed across multiple Availability Zones.
+    It then deploys a "hello world" application highly available ECS cluster using
+    Fargate containers.
 
     Finally, it deploys an  ECS services from containers published in Amazon EC2
     Container Registry (Amazon ECR).
@@ -20,7 +20,7 @@ Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Join [ "", [ !Ref S3TemplateKeyPrefix, vpc.yml ] ]
+            TemplateURL: !Sub ${S3TemplateKeyPrefix}vpc.yml
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
                 VpcCIDR:            10.180.0.0/16
@@ -47,14 +47,7 @@ Resources:
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
 
-    ECS:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: !Sub ${S3TemplateKeyPrefix}ecs-cluster.yml
-            Parameters:
-                EnvironmentName: !Ref AWS::StackName
-
-    HelloworldService:
+    WebService:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: !Sub ${S3TemplateKeyPrefix}service.yml
@@ -62,25 +55,24 @@ Resources:
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
-                Cluster: !GetAtt ECS.Outputs.Cluster
                 DesiredCount: 2
                 Listener: !GetAtt ALB.Outputs.Listener
                 Path: /
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
 
 Outputs:
-    HelloworldServiceUrl:
+    WebServiceUrl:
         Description: The URL endpoint for the helloworld service
         Value: !GetAtt ALB.Outputs.LoadBalancerUrl
 
-    HelloworldServiceStackName:
-        Description: The name of the stack containing our Helloworld Service
-        Value: !GetAtt HelloworldService.Outputs.StackName
+    WebServiceStackName:
+        Description: The name of the stack containing our Web Service
+        Value: !GetAtt WebService.Outputs.StackName
 
-    HelloworldServiceArn:
+    WebServiceArn:
         Description: The ARN of the created service
-        Value: !GetAtt HelloworldService.Outputs.ServiceArn
+        Value: !GetAtt WebService.Outputs.EcsServiceArn
 
-    HelloworldTaskExecutionRoleArn:
+    WebServiceTaskExecutionRoleArn:
         Description: The ARN of the TaskExecutionRole used by ECS
-        Value: !GetAtt HelloworldService.Outputs.TaskExecutionRoleArn
+        Value: !GetAtt WebService.Outputs.EcsTaskExecutionRoleArn

@@ -1,10 +1,13 @@
 # cloud-formation-ecs-docker-circle-ci
 
 Provision an Fargate-backed ECS cluster (and related infrastructure) with 
-CloudFormation. Zero-downtime (blue/green) deploys are kicked off by a push to 
+CloudFormation. Zero-downtime (blue/green) deploys are kicked off by a push to
 GitHub, via CircleCI. Logs are sent to an app-specific CloudWatch group.
 
-A simulated cluster to use during development is provided by Docker Compose.
+The deployed application is a simple web server which responds to HTTP requests
+with the contents of an HTML file, `index.html`. Locally, we simulate the AWS
+environment that our application will be running in through our use of Docker
+Compose.
 
 ## Local Development
 
@@ -28,22 +31,28 @@ curl -v 'http://localhost:3333'
 - [jq](https://github.com/stedolan/jq) version >= `jq-1.5`, for querying stack output-JSON
 - an AWS [access key id and secret access key](http://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html)
 
-### 1. Provision ECR and S3
+### 1. Create the Stacks
+
+The following command will create the ECR stack (which holds your application's
+Docker images), the S3 stack (which holds your Cloud Formation templates), and
+the master stack (which defines a VPC, ALB, ECS cluster, etc.). Note: Your 
+application will be built and pushed to this new ECR repository during the 
+stack creation process.
 
 ```sh
-./infrastructure/cloud-formation/scripts/bootstrap-stack-dependencies.sh your-app-name-here
+./infrastructure/cloud-formation/scripts/create-stacks.sh your-app-name-here
 ```
 
-### 2. Upload Stack YAML to S3
+### 2. Updating the Main Stack
 
-CloudFormation templates are stored in S3 - primarily so that our stack can be 
-broken into separate files referenced via `TemplateURL` (see `master.yml`):
+To tell Cloud Formation about changes you've made to the master stack's YAML 
+files, run:
 
 ```sh
-./infrastructure/cloud-formation/scripts/sync-cloud-formation-templates.sh your-app-name-here
+./infrastructure/cloud-formation/scripts/update-master-stack.sh your-app-name-here
 ```
 
-### 3. Build and Push (to ECR) Service Image (first time)
+### 3. CI: Updating the ECS Service
 
 Simulate something that a developer would do, e.g. update the app:
 
@@ -51,79 +60,38 @@ Simulate something that a developer would do, e.g. update the app:
 ./app/scripts/simulate-development.sh
 ```
 
-Build the Docker image and push to ECR:
+Build the Docker image and push to ECR (CI would typically do this):
 
 ```sh
 ./infrastructure/ci/scripts/build-app-and-push-to-ecr.sh your-app-name-here
 ```
 
-### 4. Create the Stack
-
-Create the VPC, security groups, ALB, ECS services, _et cetera_ (takes ~15 
-minutes):
-
-```sh
-./infrastructure/cloud-formation/scripts/create-stack.sh your-app-name-here
-```
-
-To get the URL of the load balancer, use `describe-stacks`:
-
-```sh
-aws cloudformation --region us-east-1 describe-stacks --stack-name your-app-name-here \
-    --query 'Stacks[0].Outputs[*].OutputValue'
-```
-
-###### Update the Stack
-
-If you need to make changes to the stack, make edits to your YAML files, run 
-the `sync-cloud-formation-templates.sh` script, and then `update-stack`:
-
-```sh
-aws cloudformation update-stack --stack-name your-app-name-here \
-    --capabilities CAPABILITY_NAMED_IAM CAPABILITY_IAM \
-    --template-body file://./infrastructure/cloud-formation/templates/master.yml \
-    --parameters "ParameterKey=S3TemplateKeyPrefix,ParameterValue=https://s3.amazonaws.com/your-app-name-here/infrastructure/cloud-formation/templates/"
-```
-
-### 5. Update the Service
-
-Simulate something that a developer would do, e.g. update the app:
-
-```sh
-./app/scripts/simulate-development.sh
-```
-
-Build the Docker image and push to ECR:
-
-```sh
-./infrastructure/ci/scripts/build-app-and-push-to-ecr.sh your-app-name-here
-```
-
-Update the ECS service such that it uses the new task definition (CI would typically do this):
+Update the ECS service such that it uses the new task definition (CI would 
+typically do this):
 
 ```sh
 ./infrastructure/ci/scripts/deploy-latest-build-to-ecs.sh your-app-name-here
 ```
 
-### 6. Interact with the API
+### 4. Interact with the Application
 
 After the your-app-name-here stack has come online, make a request to it and 
 verify that everything works:
 
 ```sh
 curl $(aws cloudformation \
-        describe-stacks \
-        --query 'Stacks[0].Outputs[?OutputKey==`HelloworldServiceUrl`].OutputValue' \
-        --stack-name your-app-name-here | jq '.[0]' | sed -e "s;\";;g")
+    describe-stacks \
+    --query 'Stacks[0].Outputs[?OutputKey==`WebServiceUrl`].OutputValue' \
+    --stack-name your-app-name-here | jq '.[0]' | sed -e "s;\";;g")
 ```
 
 ...or in a loop:
 
 ```sh
 while true; do curl $(aws cloudformation \
-                       describe-stacks \
-                       --query 'Stacks[0].Outputs[?OutputKey==`HelloworldServiceUrl`].OutputValue' \
-                       --stack-name your-app-name-here | jq '.[0]' | sed -e "s;\";;g"); sleep 1; done
+   describe-stacks \
+   --query 'Stacks[0].Outputs[?OutputKey==`WebServiceUrl`].OutputValue' \
+   --stack-name your-app-name-here | jq '.[0]' | sed -e "s;\";;g"); sleep 1; done
 ```
 
 ### TODO
