@@ -5,8 +5,8 @@ updating services with new tasks created by CircleCI
 
 ## 0. Tools and Dependencies
 
-- [AWS CLI](https://github.com/aws/aws-cli), for interacting with AWS
-- [jq](https://github.com/stedolan/jq), for querying stack output-JSON
+- [AWS CLI](https://github.com/aws/aws-cli) version >= `1.14.11`, for interacting with AWS
+- [jq](https://github.com/stedolan/jq) version >= `jq-1.5`, for querying stack output-JSON
 
 ## 1. Provision ECR and S3
 
