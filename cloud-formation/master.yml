@@ -53,26 +53,23 @@ Resources:
             TemplateURL: !Sub ${S3TemplateKeyPrefix}ecs-cluster.yml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                InstanceType: t2.small
-                ClusterSize: 4
-                VPC: !GetAtt VPC.Outputs.VPC
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
-                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
 
     HelloworldService:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: !Sub ${S3TemplateKeyPrefix}service.yml
             Parameters:
+                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 DesiredCount: 2
                 Listener: !GetAtt ALB.Outputs.Listener
                 Path: /
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
 
 Outputs:
-    ProductServiceUrl:
+    HelloworldServiceUrl:
         Description: The URL endpoint for the helloworld service
         Value: !GetAtt ALB.Outputs.LoadBalancerUrl
 
@@ -83,3 +80,7 @@ Outputs:
     HelloworldServiceArn:
         Description: The ARN of the created service
         Value: !GetAtt HelloworldService.Outputs.ServiceArn
+
+    HelloworldTaskExecutionRoleArn:
+        Description: The ARN of the TaskExecutionRole used by ECS
+        Value: !GetAtt HelloworldService.Outputs.TaskExecutionRoleArn

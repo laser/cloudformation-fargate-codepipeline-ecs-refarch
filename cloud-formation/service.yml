@@ -29,6 +29,14 @@ Parameters:
         Description: An environment name that will be prefixed to (or used to create) resource names
         Type: String
 
+    Subnets:
+        Description: Choose which subnets the Application Load Balancer should be deployed to
+        Type: List<AWS::EC2::Subnet::Id>
+
+    SecurityGroup:
+        Description: Select a security group which permits access to the ECS tasks
+        Type: AWS::EC2::SecurityGroup::Id
+
 Resources:
 
     Service:
@@ -36,9 +44,16 @@ Resources:
         DependsOn: ListenerRule
         Properties:
             Cluster: !Ref Cluster
-            Role: !Ref ServiceRole
+            LaunchType: "FARGATE"
             DesiredCount: !Ref DesiredCount
             TaskDefinition: !Ref TaskDefinition
+            NetworkConfiguration:
+                AwsvpcConfiguration:
+                    Subnets: !Ref Subnets
+                    AssignPublicIp: ENABLED
+                    SecurityGroups:
+                        - !Ref SecurityGroup
+
             LoadBalancers:
                 - ContainerName: "helloworld-service"
                   ContainerPort: 4444
@@ -47,22 +62,32 @@ Resources:
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
+            TaskRoleArn: !GetAtt TaskExecutionRole.Arn
+            ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+            Cpu: 1024
+            Memory: 2048
             Family: helloworld-service
+            NetworkMode: awsvpc
+            RequiresCompatibilities:
+                - FARGATE
             ContainerDefinitions:
                 - Name: helloworld-service
                   Environment:
-                    - Name: PORT
-                      Value: 4444
+                      - Name: PORT
+                        Value: 4444
                   Essential: true
+
+                  # TODO: replace below with a Parameter
                   Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EnvironmentName}:latest
-                  Memory: 50
+
                   PortMappings:
-                    - ContainerPort: 4444
+                      - ContainerPort: 4444
                   LogConfiguration:
-                    LogDriver: awslogs
-                    Options:
-                        awslogs-group: !Ref AWS::StackName
-                        awslogs-region: !Ref AWS::Region
+                      LogDriver: awslogs
+                      Options:
+                          awslogs-group: !Ref AWS::StackName
+                          awslogs-region: !Ref AWS::Region
+                          awslogs-stream-prefix: ecs
 
     CloudWatchLogsGroup:
         Type: AWS::Logs::LogGroup
@@ -83,6 +108,10 @@ Resources:
             HealthCheckProtocol: HTTP
             HealthCheckTimeoutSeconds: 5
             HealthyThresholdCount: 2
+            TargetType: ip
+            TargetGroupAttributes:
+                - Key: deregistration_delay.timeout_seconds
+                  Value: '20'
 
     ListenerRule:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -97,48 +126,31 @@ Resources:
                 - TargetGroupArn: !Ref TargetGroup
                   Type: forward
 
-    # This IAM Role grants the service access to register/unregister with the
-    # Application Load Balancer (ALB). It is based on the default documented here:
-    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_IAM_role.html
-    ServiceRole:
-        Type: AWS::IAM::Role
-        Properties:
-            RoleName: !Sub ecs-service-${AWS::StackName}
-            Path: /
-            AssumeRolePolicyDocument: |
-                {
-                    "Statement": [{
-                        "Effect": "Allow",
-                        "Principal": { "Service": [ "ecs.amazonaws.com" ]},
-                        "Action": [ "sts:AssumeRole" ]
-                    }]
-                }
-            Policies:
-                - PolicyName: !Sub ecs-service-${AWS::StackName}
-                  PolicyDocument: |
-                      {
-                          "Version": "2012-10-17",
-                          "Statement": [{
-                                  "Effect": "Allow",
-                                  "Action": [
-                                      "ec2:AuthorizeSecurityGroupIngress",
-                                      "ec2:Describe*",
-                                      "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                                      "elasticloadbalancing:Describe*",
-                                      "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                                      "elasticloadbalancing:DeregisterTargets",
-                                      "elasticloadbalancing:DescribeTargetGroups",
-                                      "elasticloadbalancing:DescribeTargetHealth",
-                                      "elasticloadbalancing:RegisterTargets"
-                                  ],
-                                  "Resource": "*"
-                          }]
-                      }
+    TaskExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ecs-tasks.amazonaws.com
+            Action:
+            - sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
 Outputs:
+
     StackName:
         Description: The name of the created stack
         Value: !Ref AWS::StackName
+
     ServiceArn:
-            Description: The ARN of the created service
-            Value: !Ref Service
+        Description: The ARN of the created service
+        Value: !Ref Service
+
+    TaskExecutionRoleArn:
+        Description: The ARN of the role used with the TaskDefinition
+        Value: !Ref TaskExecutionRole
