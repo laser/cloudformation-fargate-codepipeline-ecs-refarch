@@ -46,7 +46,7 @@ minutes):
 aws cloudformation create-stack --stack-name your-app-name-here \
     --capabilities CAPABILITY_NAMED_IAM CAPABILITY_IAM \
     --template-body file://./cloud-formation/master.yml \
-    --parameters "ParameterKey=S3TemplateKeyPrefix,ParameterValue=https://s3.amazonaws.com/$ENV_NAME/template-storage/"
+    --parameters "ParameterKey=S3TemplateKeyPrefix,ParameterValue=https://s3.amazonaws.com/your-app-name-here/template-storage/"
 ```
 
 To get the URL of the load balancer, use `describe-stacks`:
@@ -65,10 +65,31 @@ the `sync-cloud-formation-templates.sh` script, and then `update-stack`:
 aws cloudformation update-stack --stack-name your-app-name-here \
     --capabilities CAPABILITY_NAMED_IAM CAPABILITY_IAM \
     --template-body file://./cloud-formation/master.yml \
-    --parameters "ParameterKey=S3TemplateKeyPrefix,ParameterValue=https://s3.amazonaws.com/$ENV_NAME/template-storage/"
+    --parameters "ParameterKey=S3TemplateKeyPrefix,ParameterValue=https://s3.amazonaws.com/your-app-name-here/template-storage/"
 ```
 
 ## 5. Update the Service
+
+Update index.html with a random word:
+
+```
+./update-website.sh
+```
+
+Build, push (to ECR), create a new task definition and then update the ECS service:
+
+```
+./build-and-push.sh your-app-name-here
+./deploy.sh your-app-name-here
+```
+
+## 6. Poll the API
+
+After the your-app-name-here stack has come online, begin polling it:
+
+```
+./poll-api.sh your-app-name-here
+```
 
 ## TODO
 

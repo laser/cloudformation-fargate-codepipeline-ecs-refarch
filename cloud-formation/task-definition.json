@@ -11,7 +11,6 @@
             ],
             "essential": true,
             "image": "%IMAGE_TAG%",
-            "memory": 50,
             "portMappings": [
                 {
                     "containerPort": 4444
@@ -21,7 +20,8 @@
                 "logDriver": "awslogs",
                 "options": {
                     "awslogs-group": "%STACK_NAME%",
-                    "awslogs-region": "%AWSLOGS_REGION%"
+                    "awslogs-region": "%AWSLOGS_REGION%",
+                    "awslogs-stream-prefix": "ecs"
                 }
             }
         }
