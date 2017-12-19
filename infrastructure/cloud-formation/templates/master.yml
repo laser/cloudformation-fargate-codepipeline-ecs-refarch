@@ -1,30 +1,31 @@
 Description: >
 
-    This template deploys a VPC, with a pair of public and private subnets spread
-    across two Availabilty Zones. It deploys an Internet Gateway, with a default
-    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ),
-    and default routes for them in the private subnets.
+    This template deploys a VPC, with a pair of public and private subnets
+    spread across two Availabilty Zones. It deploys an Internet Gateway, with a
+    default route on the public subnets. It deploys a pair of NAT Gateways
+    (one in each AZ), and default routes for them in the private subnets.
 
-    It then deploys a "hello world" application highly available ECS cluster using
-    Fargate containers.
+    It then deploys a "hello world" application highly available ECS cluster
+    using Fargate containers.
 
     Finally, it deploys an  ECS services from containers published in Amazon EC2
     Container Registry (Amazon ECR).
 
 Parameters:
     S3TemplateKeyPrefix:
-        Description: An environment name that will be prefixed to resource names
+        Description: >
+            An S3 key prefix which will be used to resolve referenced templates
         Type: String
 
     DBMasterUsername:
         Description: The master username for our RDS instance
         Type: String
-        Default: postgres
+        Default: rinkydink
 
     DBMasterUserPassword:
         Description: The master password for our RDS instance
         Type: String
-        Default: postgres
+        Default: smurfmagnet
 
 Resources:
     VPC:
@@ -67,33 +68,34 @@ Resources:
                 MasterUsername: !Ref DBMasterUsername
                 MasterUserPassword: !Ref DBMasterUserPassword
                 DBSubnetGroupName: !GetAtt VPC.Outputs.DBSubnetGroup
-#
-#     WebService:
-#         Type: AWS::CloudFormation::Stack
-#         Properties:
-#             TemplateURL: !Sub ${S3TemplateKeyPrefix}service.yml
-#             Parameters:
-#                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
-#                 EnvironmentName: !Ref AWS::StackName
-#                 VPC: !GetAtt VPC.Outputs.VPC
-#                 DesiredCount: 2
-#                 Listener: !GetAtt ALB.Outputs.Listener
-#                 Path: /
-#                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
-#
-# Outputs:
-#     WebServiceUrl:
-#         Description: The URL endpoint for the helloworld service
-#         Value: !GetAtt ALB.Outputs.LoadBalancerUrl
-#
-#     WebServiceStackName:
-#         Description: The name of the stack containing our Web Service
-#         Value: !GetAtt WebService.Outputs.StackName
-#
-#     WebServiceArn:
-#         Description: The ARN of the created service
-#         Value: !GetAtt WebService.Outputs.EcsServiceArn
-#
-#     WebServiceTaskExecutionRoleArn:
-#         Description: The ARN of the TaskExecutionRole used by ECS
-#         Value: !GetAtt WebService.Outputs.EcsTaskExecutionRoleArn
+
+    WebService:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: !Sub ${S3TemplateKeyPrefix}service.yml
+            Parameters:
+                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+                EnvironmentName: !Ref AWS::StackName
+                VPC: !GetAtt VPC.Outputs.VPC
+                DesiredCount: 2
+                Listener: !GetAtt ALB.Outputs.Listener
+                Path: /
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
+                DBURL: !GetAtt Database.Outputs.DBURL
+
+Outputs:
+    WebServiceUrl:
+        Description: The URL endpoint for the helloworld service
+        Value: !GetAtt ALB.Outputs.LoadBalancerUrl
+
+    WebServiceStackName:
+        Description: The name of the stack containing our Web Service
+        Value: !GetAtt WebService.Outputs.StackName
+
+    WebServiceArn:
+        Description: The ARN of the created service
+        Value: !GetAtt WebService.Outputs.EcsServiceArn
+
+    WebServiceTaskExecutionRoleArn:
+        Description: The ARN of the TaskExecutionRole used by ECS
+        Value: !GetAtt WebService.Outputs.EcsTaskExecutionRoleArn

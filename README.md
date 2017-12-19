@@ -2,7 +2,8 @@
 
 Provision an Fargate-backed ECS cluster (and related infrastructure) with
 CloudFormation. Zero-downtime (blue/green) deploys are kicked off by a push to
-GitHub, via CircleCI. Logs are sent to an app-specific CloudWatch group.
+GitHub, via CircleCI. The application relies upon an RDS Postgres instance, also
+provisioned by Cloud Formation. Logs are sent to a CloudWatch group.
 
 The deployed application is a simple web server which responds to HTTP requests
 with the contents of an HTML file, `index.html`. Locally, we simulate the AWS
@@ -96,7 +97,7 @@ while true; do curl $(aws cloudformation \
 
 ### TODO
 
-- [ ] RDS instance + app to read database
+- [x] RDS instance + app to read database
 - [ ] one-off task to run migrations before updating service
 - [ ] tailing (or equivalent) CloudWatch logs example
 - [ ] modify healthcheck to help differentiate from user requests in the logs
@@ -104,9 +105,11 @@ while true; do curl $(aws cloudformation \
 - [ ] Code Pipeline + Code Deploy (or CircleCI)
 - [ ] SSL
 - [ ] Route53
-- [ ] KMS
 
 ### Blog Post
 
 - [ ] COPY versus VOLUME during dev
 - [ ] docker-entrypoint.sh reads environment variables for decision to run migrations
+- [ ] attaching a debugger to the app
+- [ ] running multiple (local) instances with Docker Compose
+- [ ] deploys with downtime
