@@ -1,9 +1,18 @@
-FROM busybox
+FROM python:3.6.3-alpine3.6
 
 MAINTAINER Erin Swenson-Healey <l@s3r.me>
 
-ADD index.html /www/index.html
-ADD docker-entrypoint.sh /opt/docker-entrypoint.sh
+RUN apk add --update postgresql-dev \
+    gcc \
+    musl-dev
 
-ENTRYPOINT ["/opt/docker-entrypoint.sh"]
+COPY requirements.txt /opt/
+RUN pip install -r /opt/requirements.txt
+
+COPY index.html /opt/
+COPY server.py /opt/
+COPY docker-entrypoint.sh /opt/
+
+WORKDIR /opt/
+ENTRYPOINT /opt/docker-entrypoint.sh
 CMD []

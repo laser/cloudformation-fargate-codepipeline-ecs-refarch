@@ -40,6 +40,12 @@ Parameters:
             Select a security group which permits access to the ECS tasks
         Type: AWS::EC2::SecurityGroup::Id
 
+    DBURL:
+        Description: >
+            A Postgres URL that the application will use to connect to the RDS
+            instance
+        Type: String
+
 Resources:
 
     Cluster:
@@ -83,6 +89,8 @@ Resources:
                   Environment:
                       - Name: PORT
                         Value: 4444
+                      - Name: DATABASE_URL
+                        Value: !Ref DBURL
                   Essential: true
 
                   # TODO: replace below with a Parameter
