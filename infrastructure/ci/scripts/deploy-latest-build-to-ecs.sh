@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 ENV_NAME_ARG=$1
@@ -6,25 +7,36 @@ ENV_NAME_ARG=$1
 IMAGE_TAG=$(
     aws ecr \
         describe-repositories \
+        --region us-east-1 \
         --repository-names ${ENV_NAME_ARG} \
         --query 'repositories[0].repositoryUri' | sed -e 's;\";;g'):latest
 
 SERVICE_ARN=$(
     aws cloudformation \
         describe-stacks \
+        --region us-east-1 \
         --query 'Stacks[0].Outputs[?OutputKey==`WebServiceArn`].OutputValue' \
         --stack-name ${ENV_NAME_ARG} | jq '.[0]' | sed -e "s;\";;g")
 
 STACK_NAME=$(
     aws cloudformation \
         describe-stacks \
+        --region us-east-1 \
         --query 'Stacks[0].Outputs[?OutputKey==`WebServiceStackName`].OutputValue' \
         --stack-name ${ENV_NAME_ARG} | jq '.[0]' | sed -e "s;\";;g")
 
 TASK_EXECUTION_ROLE_ARN=$(
     aws cloudformation \
         describe-stacks \
+        --region us-east-1 \
         --query 'Stacks[0].Outputs[?OutputKey==`WebServiceTaskExecutionRoleArn`].OutputValue' \
+        --stack-name ${ENV_NAME_ARG} | jq '.[0]' | sed -e "s;\";;g")
+
+DATABASE_URL=$(
+    aws cloudformation \
+        describe-stacks \
+        --region us-east-1 \
+        --query 'Stacks[0].Outputs[?OutputKey==`DBURL`].OutputValue' \
         --stack-name ${ENV_NAME_ARG} | jq '.[0]' | sed -e "s;\";;g")
 
 SERVICE_REGION=$(echo ${SERVICE_ARN} | sed -e "s;.*ecs:;;g" -e "s;:.*;;g")
@@ -36,11 +48,13 @@ TASK_FILE="./build-$(date +%s).json"
 sed -e "s;%IMAGE_TAG%;${IMAGE_TAG};g" \
     -e "s;%STACK_NAME%;${STACK_NAME};g" \
     -e "s;%AWSLOGS_REGION%;${SERVICE_REGION};g" \
+    -e "s;%DATABASE_URL%;${DATABASE_URL};g" \
     ./infrastructure/ci/templates/task-definition.json > ${TASK_FILE}
 
 TASK_REVISION=$(
     aws ecs \
         register-task-definition \
+        --region us-east-1 \
         --family web-service \
         --cpu 256 \
         --memory 512 \
@@ -50,7 +64,7 @@ TASK_REVISION=$(
         --network-mode awsvpc \
         --cli-input-json "file://${TASK_FILE}" | jq '.["taskDefinition"]["revision"]')
 
-aws ecs update-service --cluster ${ENV_NAME_ARG} --service ${SERVICE_NAME} --task-definition web-service:${TASK_REVISION}
+aws ecs update-service --region us-east-1 --cluster ${ENV_NAME_ARG} --service ${SERVICE_NAME} --task-definition web-service:${TASK_REVISION}
 
 rm ${TASK_FILE}
 

@@ -14,6 +14,7 @@ REPOSITORY_STACK_NAME=${ENV_NAME_ARG}-ecr
 BUCKET_STACK_NAME=${ENV_NAME_ARG}-template-storage
 
 aws cloudformation create-stack --stack-name ${REPOSITORY_STACK_NAME} \
+    --capabilities CAPABILITY_NAMED_IAM CAPABILITY_IAM \
     --template-body file://./infrastructure/cloud-formation/templates/image-repository.yml \
     --parameters ParameterKey=RepositoryName,ParameterValue=${ENV_NAME_ARG}
 
@@ -46,7 +47,8 @@ aws s3 sync \
 # Build the application and push to ECR
 #
 
-./infrastructure/ci/scripts/build-app-and-push-to-ecr.sh ${ENV_NAME_ARG}
+docker-compose -p app -f ./app/docker-compose.yml build
+./infrastructure/ci/scripts/tag-image-and-push-to-ecr.sh ${ENV_NAME_ARG}
 
 
 ###############################################################################

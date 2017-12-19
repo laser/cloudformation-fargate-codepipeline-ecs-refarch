@@ -1,5 +1,7 @@
 # cloud-formation-ecs-docker-circle-ci
 
+
+
 Provision an Fargate-backed ECS cluster (and related infrastructure) with
 CloudFormation. Zero-downtime (blue/green) deploys are kicked off by a push to
 GitHub, via CircleCI. The application relies upon an RDS Postgres instance, also
@@ -98,6 +100,7 @@ while true; do curl $(aws cloudformation \
 ### TODO
 
 - [x] RDS instance + app to read database
+- [ ] provision an IAM user for CI and add AmazonEC2ContainerRegistryFullAccess policy
 - [ ] one-off task to run migrations before updating service
 - [ ] tailing (or equivalent) CloudWatch logs example
 - [ ] modify healthcheck to help differentiate from user requests in the logs
@@ -107,9 +110,10 @@ while true; do curl $(aws cloudformation \
 - [ ] Route53
 
 ### Blog Post
-
 - [ ] COPY versus VOLUME during dev
 - [ ] docker-entrypoint.sh reads environment variables for decision to run migrations
 - [ ] attaching a debugger to the app
 - [ ] running multiple (local) instances with Docker Compose
 - [ ] deploys with downtime
+- [ ] secrets in an S3 bucket
+- [ ] ENTRYPOINT shell versus exec form and interaction with Docker Compose

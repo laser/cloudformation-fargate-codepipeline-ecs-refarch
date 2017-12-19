@@ -1,4 +1,8 @@
 #!/bin/ash
+
 set -e
 
-python ./server.py
+for CMD in "$@"
+do
+    ./scripts/${CMD}.sh
+done

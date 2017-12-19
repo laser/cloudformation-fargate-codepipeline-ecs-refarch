@@ -1,0 +1,42 @@
+version: 2
+
+jobs:
+  build:
+      machine: true
+      steps:
+        - checkout
+
+        - run:
+            name: Install Docker Compose and AWS CLI
+            command: |
+              set -x
+              pip install --upgrade pip
+              pip install docker-compose==1.18.0
+              pip install awscli==1.14.12
+
+        - run:
+            name: Log in to ECR
+            command: |
+              $(aws ecr get-login --no-include-email --region us-east-1)
+
+        - run:
+            name: Build the Docker image
+            command: |
+              set -x
+              docker-compose -p app -f ./app/docker-compose.ci.yml build && docker-compose -f ./app/docker-compose.ci.yml pull
+
+        - run:
+            name: Run tests in the app container
+            command: |
+              set -x
+              docker-compose -f ./app/docker-compose.ci.yml run app test
+
+        - run:
+            name: Push the newly-deployed image to ECR
+            command: |
+              ./infrastructure/ci/scripts/tag-image-and-push-to-ecr.sh brazenface
+
+        - deploy:
+            name: Deploy the new task definition to the ECS service
+            command: |
+              ./infrastructure/ci/scripts/deploy-latest-build-to-ecs.sh brazenface

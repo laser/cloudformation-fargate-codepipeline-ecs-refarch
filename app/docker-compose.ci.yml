@@ -3,17 +3,13 @@ services:
   app:
     build: .
     ports:
-      - "3333:4444"
+      - "2222:4444"
     environment:
       - PORT=4444
       - DATABASE_URL=postgresql://disco:dasco@db:5432/app
     depends_on:
       - db
-    command: migrate server
-    stdin_open: true
-    tty: true
-    volumes:
-      - .:/opt/
+    command: migrate test
   db:
     image: postgres:9.6.5-alpine
     environment:

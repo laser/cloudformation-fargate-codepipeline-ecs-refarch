@@ -99,3 +99,7 @@ Outputs:
     WebServiceTaskExecutionRoleArn:
         Description: The ARN of the TaskExecutionRole used by ECS
         Value: !GetAtt WebService.Outputs.EcsTaskExecutionRoleArn
+
+    DBURL:
+        Description: URL used to connect to the RDS instance
+        Value: !GetAtt Database.Outputs.DBURL

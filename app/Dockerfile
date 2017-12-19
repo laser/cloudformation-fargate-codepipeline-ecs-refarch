@@ -9,10 +9,8 @@ RUN apk add --update postgresql-dev \
 COPY requirements.txt /opt/
 RUN pip install -r /opt/requirements.txt
 
-COPY index.html /opt/
-COPY server.py /opt/
-COPY docker-entrypoint.sh /opt/
+COPY . /opt/
 
 WORKDIR /opt/
-ENTRYPOINT /opt/docker-entrypoint.sh
-CMD []
+ENTRYPOINT ["/opt/docker-entrypoint.sh"]
+CMD ["server"]

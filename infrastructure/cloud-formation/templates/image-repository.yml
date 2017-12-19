@@ -12,6 +12,20 @@ Parameters:
 
 Resources:
 
+    ContinuousIntegrationUser:
+        Type: "AWS::IAM::User"
+        Properties:
+            ManagedPolicyArns:
+              - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+              - arn:aws:iam::aws:policy/AmazonECS_FullAccess
+            UserName: ContinuousIntegrationUser
+
+    ContinuousIntegrationAccessKey:
+        DependsOn: ContinuousIntegrationUser
+        Type: "AWS::IAM::AccessKey"
+        Properties:
+            UserName: ContinuousIntegrationUser
+
     DemoRepository:
         Type: "AWS::ECR::Repository"
         Properties:
@@ -27,3 +41,13 @@ Resources:
                                 !Ref AWS::AccountId
                         Action:
                             - "ecr:*"
+                            - "ecr:GetAuthorizationToken"
+
+Outputs:
+    ContinuousIntegrationAccessKeyId:
+        Description: CI Access Key ID
+        Value: !Ref ContinuousIntegrationAccessKey
+
+    ContinuousIntegrationSecretAccessKey:
+        Description: CI Secret Access Key
+        Value: !GetAtt ContinuousIntegrationAccessKey.SecretAccessKey
