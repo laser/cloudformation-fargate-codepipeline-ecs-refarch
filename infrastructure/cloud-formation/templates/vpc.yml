@@ -154,7 +154,6 @@ Resources:
             RouteTableId: !Ref PublicRouteTable
             SubnetId: !Ref PublicSubnet2
 
-
     PrivateRouteTable1:
         Type: AWS::EC2::RouteTable
         Properties:
@@ -197,6 +196,14 @@ Resources:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
 
+    DBSubnetGroup:
+        Type: AWS::RDS::DBSubnetGroup
+        Properties:
+            DBSubnetGroupDescription: !Ref EnvironmentName
+            SubnetIds:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+
 Outputs:
 
     VPC:
@@ -226,3 +233,7 @@ Outputs:
     PrivateSubnet2:
         Description: A reference to the private subnet in the 2nd Availability Zone
         Value: !Ref PrivateSubnet2
+
+    DBSubnetGroup:
+        Description: A reference to the DB subnet group for the DB instance.
+        Value: !Ref DBSubnetGroup

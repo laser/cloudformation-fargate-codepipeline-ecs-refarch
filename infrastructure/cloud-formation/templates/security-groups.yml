@@ -13,6 +13,20 @@ Parameters:
 
 Resources:
 
+    RDSInstanceSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: !Ref VPC
+            GroupDescription: Access to the RDS instance
+            SecurityGroupIngress:
+                # Only allow inbound access to RDS from ECS. This will need to
+                # change if we add a bastion host.
+                - SourceSecurityGroupId: !Ref ECSHostSecurityGroup
+                  IpProtocol: -1
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-RDS-Instances
+
     # This security group defines who/where is allowed to access the ECS
     # containers. By default we're just allowing access from the ALB.  If you
     # want to expose non-load balanced services, you can open their ports here.
@@ -57,3 +71,6 @@ Outputs:
         Description: A reference to the security group for load balancers
         Value: !Ref LoadBalancerSecurityGroup
 
+    RDSInstanceSecurityGroup:
+        Description: A reference to the security group for the RDS instance
+        Value: !Ref RDSInstanceSecurityGroup

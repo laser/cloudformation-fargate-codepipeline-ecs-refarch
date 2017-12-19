@@ -1,0 +1,49 @@
+Description: >
+    This stack provisions the RDS instance which will be used by our app.
+
+Parameters:
+
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+    SecurityGroup:
+        Description: Select the Security Group to apply to the RDS instance
+        Type: AWS::EC2::SecurityGroup::Id
+
+    MasterUsername:
+        Description: The master user name for the DB instance.
+        Type: String
+
+    MasterUserPassword:
+        Description: The master password for the DB instance.
+        Type: String
+
+    DBSubnetGroupName:
+        Description: A DB subnet group to associate with the DB instance.
+        Type: String
+
+Resources:
+
+    Database:
+        Type: AWS::RDS::DBInstance
+        Properties:
+            AllocatedStorage: 5
+            AutoMinorVersionUpgrade: true
+            BackupRetentionPeriod: 0
+            DBInstanceClass: db.t2.micro
+            DBName: !Ref EnvironmentName
+            VPCSecurityGroups:
+                - !Ref SecurityGroup
+            DBSubnetGroupName: !Ref DBSubnetGroupName
+            Engine: postgres
+            EngineVersion: 9.5.4
+            MasterUsername: !Ref MasterUsername
+            MasterUserPassword: !Ref MasterUserPassword
+            MultiAZ: true
+
+Outputs:
+
+    DBURL:
+      Description: A Postgres URL for our application to consume.
+      Value: !Sub ${Database.Endpoint.Address}:${Database.Endpoint.Port}/${EnvironmentName}

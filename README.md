@@ -104,3 +104,9 @@ while true; do curl $(aws cloudformation \
 - [ ] Code Pipeline + Code Deploy (or CircleCI)
 - [ ] SSL
 - [ ] Route53
+- [ ] KMS
+
+### Blog Post
+
+- [ ] COPY versus VOLUME during dev
+- [ ] docker-entrypoint.sh reads environment variables for decision to run migrations
