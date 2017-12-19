@@ -1,6 +1,6 @@
 # cloud-formation-ecs-docker-circle-ci
 
-Provision an Fargate-backed ECS cluster (and related infrastructure) with 
+Provision an Fargate-backed ECS cluster (and related infrastructure) with
 CloudFormation. Zero-downtime (blue/green) deploys are kicked off by a push to
 GitHub, via CircleCI. Logs are sent to an app-specific CloudWatch group.
 
@@ -35,8 +35,8 @@ curl -v 'http://localhost:3333'
 
 The following command will create the ECR stack (which holds your application's
 Docker images), the S3 stack (which holds your Cloud Formation templates), and
-the master stack (which defines a VPC, ALB, ECS cluster, etc.). Note: Your 
-application will be built and pushed to this new ECR repository during the 
+the master stack (which defines a VPC, ALB, ECS cluster, etc.). Note: Your
+application will be built and pushed to this new ECR repository during the
 stack creation process.
 
 ```sh
@@ -45,7 +45,7 @@ stack creation process.
 
 ### 2. Updating the Main Stack
 
-To tell Cloud Formation about changes you've made to the master stack's YAML 
+To tell Cloud Formation about changes you've made to the master stack's YAML
 files, run:
 
 ```sh
@@ -66,7 +66,7 @@ Build the Docker image and push to ECR (CI would typically do this):
 ./infrastructure/ci/scripts/build-app-and-push-to-ecr.sh your-app-name-here
 ```
 
-Update the ECS service such that it uses the new task definition (CI would 
+Update the ECS service such that it uses the new task definition (CI would
 typically do this):
 
 ```sh
@@ -75,7 +75,7 @@ typically do this):
 
 ### 4. Interact with the Application
 
-After the your-app-name-here stack has come online, make a request to it and 
+After the your-app-name-here stack has come online, make a request to it and
 verify that everything works:
 
 ```sh
@@ -99,7 +99,7 @@ while true; do curl $(aws cloudformation \
 - [ ] RDS instance + app to read database
 - [ ] one-off task to run migrations before updating service
 - [ ] tailing (or equivalent) CloudWatch logs example
-- [ ] modify healthcheck to help differentiate from user requests in the logs 
+- [ ] modify healthcheck to help differentiate from user requests in the logs
 - [ ] ensure that the ALB path is configured correctly (add more paths to app)
 - [ ] Code Pipeline + Code Deploy (or CircleCI)
 - [ ] SSL
