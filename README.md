@@ -96,11 +96,11 @@ while true; do curl $(aws cloudformation \
 
 ### TODO
 
-- [ ] SSL termination
-- [ ] Route53
 - [ ] RDS instance + app to read database
 - [ ] one-off task to run migrations before updating service
-- [ ] create bastion instance for SSH
-- [ ] CloudWatch logs example
-- [ ] add a second service and demonstrate intra-network routing
-- [ ] why "${TASK_FILE}" instead of "$TASK_FILE" ?
+- [ ] tailing (or equivalent) CloudWatch logs example
+- [ ] modify healthcheck to help differentiate from user requests in the logs 
+- [ ] ensure that the ALB path is configured correctly (add more paths to app)
+- [ ] Code Pipeline + Code Deploy (or CircleCI)
+- [ ] SSL
+- [ ] Route53
