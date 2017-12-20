@@ -30,6 +30,7 @@ curl -v 'http://localhost:3333'
 
 ### 0. Tools and Dependencies
 
+- [Docker Compose](https://docs.docker.com/compose/)
 - [AWS CLI](https://github.com/aws/aws-cli) version >= `1.14.11`, for interacting with AWS
 - [jq](https://github.com/stedolan/jq) version >= `jq-1.5`, for querying stack output-JSON
 - an AWS [access key id and secret access key](http://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html)
@@ -60,10 +61,18 @@ files, run:
 Simulate something that a developer would do, e.g. update the app:
 
 ```sh
-./app/scripts/simulate-development.sh
+perl -e \
+    'open IN, "</usr/share/dict/words";rand($.) < 1 && ($n=$_) while <IN>;print $n' \
+        | { read test; sed -i '' -e "s/\(<body>\).*\(<\/body>\)/<body>$test<\/body>/g" ./app/index.html; }
 ```
 
-Build the Docker image and push to ECR (CI would typically do this):
+Build the Docker image:
+
+```sh
+docker-compose -p app -f ./app/docker-compose.yml build
+```
+
+and push to ECR (CI would typically do this):
 
 ```sh
 ./infrastructure/ci/scripts/build-app-and-push-to-ecr.sh your-app-name-here
@@ -82,7 +91,7 @@ After the your-app-name-here stack has come online, make a request to it and
 verify that everything works:
 
 ```sh
-curl $(aws cloudformation \
+curl -v $(aws cloudformation \
     describe-stacks \
     --query 'Stacks[0].Outputs[?OutputKey==`WebServiceUrl`].OutputValue' \
     --stack-name your-app-name-here | jq '.[0]' | sed -e "s;\";;g")
@@ -91,7 +100,7 @@ curl $(aws cloudformation \
 ...or in a loop:
 
 ```sh
-while true; do curl $(aws cloudformation \
+while true; do curl -v $(aws cloudformation \
    describe-stacks \
    --query 'Stacks[0].Outputs[?OutputKey==`WebServiceUrl`].OutputValue' \
    --stack-name your-app-name-here | jq '.[0]' | sed -e "s;\";;g"); sleep 1; done
