@@ -34,9 +34,9 @@ jobs:
         - run:
             name: Push the newly-deployed image to ECR
             command: |
-              ./infrastructure/ci/scripts/tag-image-and-push-to-ecr.sh brazenface
+              ./infrastructure/ci/scripts/tag-image-and-push-to-ecr.sh ${MASTER_STACK_NAME}
 
         - deploy:
             name: Deploy the new task definition to the ECS service
             command: |
-              ./infrastructure/ci/scripts/deploy-latest-build-to-ecs.sh brazenface
+              ./infrastructure/ci/scripts/deploy-latest-build-to-ecs.sh ${MASTER_STACK_NAME}
