@@ -34,6 +34,7 @@ curl -v 'http://localhost:3333'
 - [AWS CLI](https://github.com/aws/aws-cli) version >= `1.14.11`, for interacting with AWS
 - [jq](https://github.com/stedolan/jq) version >= `jq-1.5`, for querying stack output-JSON
 - an AWS [access key id and secret access key](http://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html)
+- a fork of this repository (so that you can integrate with CircleCI)
 
 ### 1. Create the Stacks
 
@@ -105,6 +106,36 @@ while true; do curl -v $(aws cloudformation \
    --query 'Stacks[0].Outputs[?OutputKey==`WebServiceUrl`].OutputValue' \
    --stack-name your-app-name-here | jq '.[0]' | sed -e "s;\";;g"); sleep 1; done
 ```
+
+### 5. Configure CircleCI
+
+First, obtain the AWS secret key and AWS access key id that was provisioned for
+your stack:
+
+```sh
+# access key id
+aws cloudformation \
+    describe-stacks \
+    --region us-east-1 \
+    --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationAccessKeyId`].OutputValue' \
+    --stack-name your-app-name-here-ecr | jq '.[0]' | sed -e "s;\";;g")
+
+# secret access key
+aws cloudformation \
+    describe-stacks \
+    --region us-east-1 \
+    --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationSecretAccessKey`].OutputValue' \
+    --stack-name your-app-name-here-ecr | jq '.[0]' | sed -e "s;\";;g")
+```
+
+Then, log into CircleCI and configure a new project using your fork. When you've
+done that, add a new environment variable (see _Build Setting_ section of the
+settings screen's left-hand sidebar) called `MASTER_STACK_NAME` whose value is
+whatever you've been using in place of `your-app-name-here`. Finally, add the
+AWS key id and AWS secret access key to your project's settings via the
+_Permissions_ section of the settings screen's left-hand sidebar. The next push
+you make to your GitHub-hosted repo should kick off a build (and deploy).
+
 
 ### TODO
 
