@@ -51,7 +51,7 @@ application will be built and pushed to this new ECR repository during the
 stack creation process.
 
 ```sh
-./infrastructure/cloud-formation/scripts/create-stacks.sh $MASTER_STACK_NAME
+./infrastructure/cloud-formation/scripts/create-stacks.sh ${MASTER_STACK_NAME}
 ```
 
 #### Bonus: Updating the Main Stack
@@ -60,7 +60,7 @@ To tell Cloud Formation about changes you've made to the master stack's YAML
 files, run:
 
 ```sh
-./infrastructure/cloud-formation/scripts/update-master-stack.sh $MASTER_STACK_NAME
+./infrastructure/cloud-formation/scripts/update-master-stack.sh ${MASTER_STACK_NAME}
 ```
 
 ### 2. CI: Updating the ECS Service
@@ -70,7 +70,13 @@ Simulate something that a developer would do, e.g. update the app:
 ```sh
 perl -e \
     'open IN, "</usr/share/dict/words";rand($.) < 1 && ($n=$_) while <IN>;print $n' \
-        | { read test; sed -i '' -e "s/\(<body>\).*\(<\/body>\)/<body>$test<\/body>/g" ./app/index.html; }
+        | { read palabra; sed -i -e "s/\(<body>\).*\(<\/body>\)/<body>${palabra}<\/body>/g" ./app/index.html; }
+```
+
+Log in to ECR:
+
+```sh
+$(aws ecr get-login --no-include-email --region us-east-1)
 ```
 
 Build the Docker image:
@@ -82,14 +88,14 @@ docker-compose -p app -f ./app/docker-compose.yml build
 and push to ECR (CI would typically do this):
 
 ```sh
-./infrastructure/ci/scripts/tag-image-and-push-to-ecr.sh $MASTER_STACK_NAME
+./infrastructure/ci/scripts/tag-image-and-push-to-ecr.sh ${MASTER_STACK_NAME}
 ```
 
 Update the ECS service such that it uses the new task definition (CI would
 typically do this):
 
 ```sh
-./infrastructure/ci/scripts/deploy-latest-build-to-ecs.sh $MASTER_STACK_NAME
+./infrastructure/ci/scripts/deploy-latest-build-to-ecs.sh ${MASTER_STACK_NAME}
 ```
 
 ### 3. Interact with the Application
@@ -101,7 +107,7 @@ works:
 curl -v $(aws cloudformation \
     describe-stacks \
     --query 'Stacks[0].Outputs[?OutputKey==`WebServiceUrl`].OutputValue' \
-    --stack-name $MASTER_STACK_NAME | jq '.[0]' | sed -e "s;\";;g")
+    --stack-name ${MASTER_STACK_NAME} | jq '.[0]' | sed -e "s;\";;g")
 ```
 
 ...or in a loop:
@@ -110,7 +116,7 @@ curl -v $(aws cloudformation \
 while true; do curl -v $(aws cloudformation \
    describe-stacks \
    --query 'Stacks[0].Outputs[?OutputKey==`WebServiceUrl`].OutputValue' \
-   --stack-name $MASTER_STACK_NAME | jq '.[0]' | sed -e "s;\";;g"); sleep 1; done
+   --stack-name ${MASTER_STACK_NAME} | jq '.[0]' | sed -e "s;\";;g"); sleep 1; done
 ```
 
 ### 4. Configure CircleCI
@@ -124,20 +130,20 @@ aws cloudformation \
     describe-stacks \
     --region us-east-1 \
     --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationAccessKeyId`].OutputValue' \
-    --stack-name $MASTER_STACK_NAME-ecr | jq '.[0]' | sed -e "s;\";;g")
+    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g")
 
 # secret access key
 aws cloudformation \
     describe-stacks \
     --region us-east-1 \
     --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationSecretAccessKey`].OutputValue' \
-    --stack-name $MASTER_STACK_NAME-ecr | jq '.[0]' | sed -e "s;\";;g")
+    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g")
 ```
 
 Then, log into CircleCI and configure a new project using your fork. When you've
 done that, add a new environment variable (see _Build Setting_ section of the
 settings screen's left-hand sidebar) called `MASTER_STACK_NAME` whose value is
-whatever you've been using in place of `$MASTER_STACK_NAME`. Finally, add the
+whatever you've been using in place of `${MASTER_STACK_NAME}`. Finally, add the
 AWS key id and AWS secret access key to your project's settings via the
 _Permissions_ section of the settings screen's left-hand sidebar. The next push
 you make to your GitHub-hosted repo should kick off a build (and deploy).

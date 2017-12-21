@@ -13,6 +13,7 @@
                     "value": "%DATABASE_URL%"
                 }
             ],
+            "command": %COMMAND_JSON_ARRAY%,
             "essential": true,
             "image": "%IMAGE_TAG%",
             "portMappings": [
