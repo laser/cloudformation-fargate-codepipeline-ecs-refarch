@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 . ./infrastructure/cloud-formation/scripts/shared-functions.sh --source-only
 
@@ -27,9 +27,11 @@ aws cloudformation update-stack --stack-name $ENV_NAME_ARG \
     --parameters "ParameterKey=DBEngineVersion,ParameterValue=9.6.5" \
     --parameters "ParameterKey=S3TemplateKeyPrefix,ParameterValue=https://s3.amazonaws.com/$ENV_NAME_ARG/infrastructure/cloud-formation/templates/"
 
+set +x
 until stack_create_complete $ENV_NAME_ARG; do
     echo "$(date):${ENV_NAME_ARG}:$(get_stack_status ${ENV_NAME_ARG})"
     sleep 1
 done
+set -x
 
 echo "$(date):${0##*/}:success"

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 . ./infrastructure/cloud-formation/scripts/shared-functions.sh --source-only
 
