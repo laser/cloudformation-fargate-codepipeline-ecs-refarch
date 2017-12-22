@@ -55,7 +55,7 @@ docker-compose -p app -f ./app/docker-compose.yml build
 # Create the main stack (which relies upon the built image in ECR)
 #
 
-aws cloudformation create-stack --stack-name $ENV_NAME_ARG \
+aws cloudformation create-stack --stack-name ${ENV_NAME_ARG} \
     --capabilities CAPABILITY_NAMED_IAM CAPABILITY_IAM \
     --template-body file://./infrastructure/cloud-formation/templates/master.yml \
     --parameters "ParameterKey=DBInstanceClass,ParameterValue=db.t2.micro" \
