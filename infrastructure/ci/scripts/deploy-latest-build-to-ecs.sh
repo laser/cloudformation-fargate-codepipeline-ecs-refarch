@@ -46,7 +46,7 @@ SERVICE_NAME=$(echo ${SERVICE_ARN} | sed -e "s;.*/;;g")
 TASK_FILE="./build-$(date +%s).json"
 
 sed -e "s;%IMAGE_TAG%;${IMAGE_TAG};g" \
-    -e "s;%STACK_NAME%;${STACK_NAME};g" \
+    -e "s;%AWSLOGS_GROUP%;${STACK_NAME};g" \
     -e "s;%AWSLOGS_REGION%;${SERVICE_REGION};g" \
     -e "s;%DATABASE_URL%;${DATABASE_URL};g" \
     -e "s;%COMMAND_JSON_ARRAY%;\[\"server\"];g" \

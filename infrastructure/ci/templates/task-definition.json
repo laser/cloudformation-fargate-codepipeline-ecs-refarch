@@ -24,7 +24,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "%STACK_NAME%",
+                    "awslogs-group": "%AWSLOGS_GROUP%",
                     "awslogs-region": "%AWSLOGS_REGION%",
                     "awslogs-stream-prefix": "ecs"
                 }

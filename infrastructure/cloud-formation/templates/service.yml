@@ -86,7 +86,8 @@ Resources:
                 - FARGATE
             ContainerDefinitions:
                 - Name: web-service
-                  Command: server
+                  Command:
+                      - server
                   Environment:
                       - Name: PORT
                         Value: 4444
