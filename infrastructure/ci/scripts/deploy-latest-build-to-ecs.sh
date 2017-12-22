@@ -16,28 +16,28 @@ SERVICE_ARN=$(
         describe-stacks \
         --region us-east-1 \
         --query 'Stacks[0].Outputs[?OutputKey==`WebServiceArn`].OutputValue' \
-        --stack-name ${ENV_NAME_ARG} | jq '.[0]' | sed -e "s;\";;g")
+        --stack-name ${ENV_NAME_ARG} | jq -r '.[0]')
 
-STACK_NAME=$(
+LOG_GROUP_NAME=$(
     aws cloudformation \
         describe-stacks \
         --region us-east-1 \
-        --query 'Stacks[0].Outputs[?OutputKey==`WebServiceStackName`].OutputValue' \
-        --stack-name ${ENV_NAME_ARG} | jq '.[0]' | sed -e "s;\";;g")
+        --query 'Stacks[0].Outputs[?OutputKey==`WebServiceLogGroupName`].OutputValue' \
+        --stack-name ${ENV_NAME_ARG} | jq -r '.[0]')
 
 TASK_EXECUTION_ROLE_ARN=$(
     aws cloudformation \
         describe-stacks \
         --region us-east-1 \
         --query 'Stacks[0].Outputs[?OutputKey==`WebServiceTaskExecutionRoleArn`].OutputValue' \
-        --stack-name ${ENV_NAME_ARG} | jq '.[0]' | sed -e "s;\";;g")
+        --stack-name ${ENV_NAME_ARG} | jq -r '.[0]')
 
 DATABASE_URL=$(
     aws cloudformation \
         describe-stacks \
         --region us-east-1 \
         --query 'Stacks[0].Outputs[?OutputKey==`DBURL`].OutputValue' \
-        --stack-name ${ENV_NAME_ARG} | jq '.[0]' | sed -e "s;\";;g")
+        --stack-name ${ENV_NAME_ARG} | jq -r '.[0]')
 
 SERVICE_REGION=$(echo ${SERVICE_ARN} | sed -e "s;.*ecs:;;g" -e "s;:.*;;g")
 
@@ -46,9 +46,11 @@ SERVICE_NAME=$(echo ${SERVICE_ARN} | sed -e "s;.*/;;g")
 TASK_FILE="./build-$(date +%s).json"
 
 sed -e "s;%IMAGE_TAG%;${IMAGE_TAG};g" \
-    -e "s;%AWSLOGS_GROUP%;${STACK_NAME};g" \
+    -e "s;%AWSLOGS_GROUP%;${LOG_GROUP_NAME};g" \
     -e "s;%AWSLOGS_REGION%;${SERVICE_REGION};g" \
     -e "s;%DATABASE_URL%;${DATABASE_URL};g" \
+    -e "s;%TASK_FAMILY_NAME%;${ENV_NAME_ARG};g" \
+    -e "s;%TASK_CONTAINER_NAME%;${ENV_NAME_ARG};g" \
     -e "s;%COMMAND_JSON_ARRAY%;\[\"server\"];g" \
     ./infrastructure/ci/templates/task-definition.json > ${TASK_FILE}
 

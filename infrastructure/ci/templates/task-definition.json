@@ -1,8 +1,8 @@
 {
-    "family": "web-service",
+    "family": "%TASK_FAMILY_NAME%",
     "containerDefinitions": [
         {
-            "name": "web-service",
+            "name": "%TASK_CONTAINER_NAME%",
             "environment": [
                 {
                     "name": "PORT",
