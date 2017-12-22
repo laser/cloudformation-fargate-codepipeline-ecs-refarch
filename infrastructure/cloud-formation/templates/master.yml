@@ -27,6 +27,21 @@ Parameters:
         Type: String
         Default: smurfmagnet
 
+    DBInstanceClass:
+        Description: Instance class for RDS instance
+        Type: String
+        Default: db.t2.micro
+
+    DBEngine:
+        Description: RDS instance-engine (e.g. postgres)
+        Type: String
+        Default: postgres
+
+    DBEngineVersion:
+        Description: RDS instance version number (e.g. 9.6.5)
+        Type: String
+        Default: 9.6.5
+
 Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
@@ -64,15 +79,18 @@ Resources:
             TemplateURL: !Sub ${S3TemplateKeyPrefix}database.yml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.RDSInstanceSecurityGroup
-                MasterUsername: !Ref DBMasterUsername
-                MasterUserPassword: !Ref DBMasterUserPassword
+                DBSecurityGroup: !GetAtt SecurityGroups.Outputs.RDSInstanceSecurityGroup
+                DBMasterUsername: !Ref DBMasterUsername
+                DBMasterUserPassword: !Ref DBMasterUserPassword
                 DBSubnetGroupName: !GetAtt VPC.Outputs.DBSubnetGroup
+                DBInstanceClass: !Ref DBInstanceClass
+                DBEngineVersion: !Ref DBEngineVersion
+                DBEngine: !Ref DBEngine
 
     WebService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Sub ${S3TemplateKeyPrefix}service.yml
+            TemplateURL: !Sub ${S3TemplateKeyPrefix}-ecs-cluster.yml
             Parameters:
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
                 EnvironmentName: !Ref AWS::StackName
@@ -80,7 +98,7 @@ Resources:
                 DesiredCount: 2
                 Listener: !GetAtt ALB.Outputs.Listener
                 Path: /
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
+                ECSServicesSecurityGroup: !GetAtt SecurityGroups.Outputs.ECSServicesSecurityGroup
                 DBURL: !GetAtt Database.Outputs.DBURL
 
 Outputs:

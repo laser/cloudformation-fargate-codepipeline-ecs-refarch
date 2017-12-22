@@ -1,27 +1,49 @@
 Description: >
     This stack provisions the RDS instance which will be used by our app.
 
+Mappings:
+    DBEngineToDBURLScheme:
+        postgres:
+            Value: postgresql
+        mysql:
+            Value: mysql
+
 Parameters:
 
     EnvironmentName:
         Description: An environment name that will be prefixed to resource names
         Type: String
 
-    SecurityGroup:
+    DBSecurityGroup:
         Description: Select the Security Group to apply to the RDS instance
         Type: AWS::EC2::SecurityGroup::Id
 
-    MasterUsername:
+    DBMasterUsername:
         Description: The master user name for the DB instance.
         Type: String
 
-    MasterUserPassword:
+    DBMasterUserPassword:
         Description: The master password for the DB instance.
         Type: String
 
     DBSubnetGroupName:
         Description: A DB subnet group to associate with the DB instance.
         Type: String
+
+    DBInstanceClass:
+        Description: Instance class for the RDS instance
+        Type: String
+
+    DBEngineVersion:
+        Description: Engine version number (e.g. 9.6.5)
+        Type: String
+
+    DBEngine:
+        Description: Database engine (e.g. postgres)
+        Type: String
+        AllowedValues:
+            - postgres
+            - mysql
 
 Resources:
 
@@ -31,15 +53,15 @@ Resources:
             AllocatedStorage: 5
             AutoMinorVersionUpgrade: true
             BackupRetentionPeriod: 0
-            DBInstanceClass: db.t2.micro
+            DBInstanceClass: !Ref DBInstanceClass
             DBName: !Ref EnvironmentName
             VPCSecurityGroups:
-                - !Ref SecurityGroup
+                - !Ref DBSecurityGroup
             DBSubnetGroupName: !Ref DBSubnetGroupName
-            Engine: postgres
-            EngineVersion: 9.6.5
-            MasterUsername: !Ref MasterUsername
-            MasterUserPassword: !Ref MasterUserPassword
+            Engine: !Ref DBEngine
+            EngineVersion: !Ref DBEngineVersion
+            MasterUsername: !Ref DBMasterUsername
+            MasterUserPassword: !Ref DBMasterUserPassword
             MultiAZ: true
 
 Outputs:
@@ -57,5 +79,18 @@ Outputs:
       Value: !GetAtt Database.Endpoint.Port
 
     DBURL:
-      Description: A Postgres connection string
-      Value: !Sub postgresql://${MasterUsername}:${MasterUserPassword}@${Database.Endpoint.Address}:${Database.Endpoint.Port}/${EnvironmentName}
+      Description: A database connection string
+      Value:
+        Fn::Join:
+            - ""
+            - - !FindInMap [DBEngineToDBURLScheme, !Ref DBEngine, Value]
+              - "://"
+              - !Ref DBMasterUsername
+              - ":"
+              - !Ref DBMasterUserPassword
+              - "@"
+              - !GetAtt Database.Endpoint.Address
+              - ":"
+              - !GetAtt Database.Endpoint.Port
+              - "/"
+              - !Ref EnvironmentName

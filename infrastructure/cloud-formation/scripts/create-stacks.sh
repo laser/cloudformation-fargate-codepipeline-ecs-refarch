@@ -58,6 +58,9 @@ docker-compose -p app -f ./app/docker-compose.yml build
 aws cloudformation create-stack --stack-name $ENV_NAME_ARG \
     --capabilities CAPABILITY_NAMED_IAM CAPABILITY_IAM \
     --template-body file://./infrastructure/cloud-formation/templates/master.yml \
+    --parameters "ParameterKey=DBInstanceClass,ParameterValue=db.t2.micro" \
+    --parameters "ParameterKey=DBEngine,ParameterValue=postgres" \
+    --parameters "ParameterKey=DBEngineVersion,ParameterValue=9.6.5" \
     --parameters "ParameterKey=S3TemplateKeyPrefix,ParameterValue=https://s3.amazonaws.com/${ENV_NAME_ARG}/infrastructure/cloud-formation/templates/"
 
 until stack_create_complete $ENV_NAME_ARG; do
