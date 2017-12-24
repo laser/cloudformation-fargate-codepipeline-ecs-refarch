@@ -118,6 +118,14 @@ Outputs:
         Description: The ARN of the TaskExecutionRole used by ECS
         Value: !GetAtt EcsCluster.Outputs.EcsTaskExecutionRoleArn
 
+    WebServiceTaskFamilyName:
+        Description: The name of the task family with which we register web service tasks
+        Value: !GetAtt EcsCluster.Outputs.WebServiceTaskFamilyName
+
+    WebServiceContainerName:
+        Description: The name of the container in which our web service runs
+        Value: !GetAtt EcsCluster.Outputs.WebServiceContainerName
+
     DBURL:
         Description: URL used to connect to the RDS instance
         Value: !GetAtt Database.Outputs.DBURL

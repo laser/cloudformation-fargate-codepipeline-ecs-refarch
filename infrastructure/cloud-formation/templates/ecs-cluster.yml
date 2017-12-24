@@ -71,7 +71,7 @@ Resources:
                     SecurityGroups:
                         - !Ref ECSServicesSecurityGroup
             LoadBalancers:
-                - ContainerName: WebService
+                - ContainerName: !Sub ${EnvironmentName}-WebService
                   ContainerPort: 4444
                   TargetGroupArn: !Ref TargetGroup
 
@@ -82,12 +82,12 @@ Resources:
             ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
             Cpu: 256
             Memory: 512
-            Family: WebService
+            Family: !Sub ${EnvironmentName}-WebService
             NetworkMode: awsvpc
             RequiresCompatibilities:
                 - FARGATE
             ContainerDefinitions:
-                - Name: WebService
+                - Name: !Sub ${EnvironmentName}-WebService
                   Command:
                       - server
                   Environment:
@@ -173,4 +173,12 @@ Outputs:
 
     WebServiceLogGroupName:
         Description: The name of the CloudWatch log group for our web service
+        Value: !Sub ${EnvironmentName}-WebService
+
+    WebServiceContainerName:
+        Description: The name of the container in which our web service runs
+        Value: !Sub ${EnvironmentName}-WebService
+
+    WebServiceTaskFamilyName:
+        Description: The name task family for the web service
         Value: !Sub ${EnvironmentName}-WebService
