@@ -27,6 +27,21 @@ Parameters:
         Type: String
         Default: smurfmagnet
 
+    DBInstanceClass:
+        Description: Instance class for RDS instance
+        Type: String
+        Default: db.t2.micro
+
+    DBEngine:
+        Description: RDS instance-engine (e.g. postgres)
+        Type: String
+        Default: postgres
+
+    DBEngineVersion:
+        Description: RDS instance version number (e.g. 9.6.5)
+        Type: String
+        Default: 9.6.5
+
 Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
@@ -64,41 +79,52 @@ Resources:
             TemplateURL: !Sub ${S3TemplateKeyPrefix}database.yml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.RDSInstanceSecurityGroup
-                MasterUsername: !Ref DBMasterUsername
-                MasterUserPassword: !Ref DBMasterUserPassword
+                DBSecurityGroup: !GetAtt SecurityGroups.Outputs.RDSInstanceSecurityGroup
+                DBMasterUsername: !Ref DBMasterUsername
+                DBMasterUserPassword: !Ref DBMasterUserPassword
                 DBSubnetGroupName: !GetAtt VPC.Outputs.DBSubnetGroup
+                DBInstanceClass: !Ref DBInstanceClass
+                DBEngineVersion: !Ref DBEngineVersion
+                DBEngine: !Ref DBEngine
 
-    WebService:
+    EcsCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Sub ${S3TemplateKeyPrefix}service.yml
+            TemplateURL: !Sub ${S3TemplateKeyPrefix}ecs-cluster.yml
             Parameters:
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
                 DesiredCount: 2
                 Listener: !GetAtt ALB.Outputs.Listener
-                Path: /
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
+                ECSServicesSecurityGroup: !GetAtt SecurityGroups.Outputs.ECSServicesSecurityGroup
                 DBURL: !GetAtt Database.Outputs.DBURL
 
 Outputs:
+
+    WebServiceLogGroupName:
+        Description: The CloudWatch log group which contains our web service logs
+        Value: !GetAtt EcsCluster.Outputs.WebServiceLogGroupName
+
     WebServiceUrl:
-        Description: The URL endpoint for the helloworld service
+        Description: The URL of the load balancer
         Value: !GetAtt ALB.Outputs.LoadBalancerUrl
 
-    WebServiceStackName:
-        Description: The name of the stack containing our Web Service
-        Value: !GetAtt WebService.Outputs.StackName
-
     WebServiceArn:
-        Description: The ARN of the created service
-        Value: !GetAtt WebService.Outputs.EcsServiceArn
+        Description: The ARN of the web service
+        Value: !GetAtt EcsCluster.Outputs.EcsServiceArn
 
     WebServiceTaskExecutionRoleArn:
         Description: The ARN of the TaskExecutionRole used by ECS
-        Value: !GetAtt WebService.Outputs.EcsTaskExecutionRoleArn
+        Value: !GetAtt EcsCluster.Outputs.EcsTaskExecutionRoleArn
+
+    WebServiceTaskFamilyName:
+        Description: The name of the task family with which we register web service tasks
+        Value: !GetAtt EcsCluster.Outputs.WebServiceTaskFamilyName
+
+    WebServiceContainerName:
+        Description: The name of the container in which our web service runs
+        Value: !GetAtt EcsCluster.Outputs.WebServiceContainerName
 
     DBURL:
         Description: URL used to connect to the RDS instance

@@ -2,6 +2,15 @@ Description: >
     This is an example of a long running ECS service that responds to HTTP
     requests with a single word.
 
+# Mappings:
+#
+#     TaskFamilyToInternalPort:
+#         WebService:
+#             Value: 4444
+#     TaskFamilyToLogGroup:
+#         WebService:
+#             Value: !Sub ${EnvironmentName}-WebService
+
 Parameters:
 
     VPC:
@@ -12,16 +21,10 @@ Parameters:
         Description: >
             How many instances of this task should we run across our cluster?
         Type: Number
-        Default: 2
 
     Listener:
         Description: The Application Load Balancer listener to register with
         Type: String
-
-    Path:
-        Description: The path to register with the Application Load Balancer
-        Type: String
-        Default: /
 
     EnvironmentName:
         Description: >
@@ -35,7 +38,7 @@ Parameters:
             deployed to
         Type: List<AWS::EC2::Subnet::Id>
 
-    SecurityGroup:
+    ECSServicesSecurityGroup:
         Description: >
             Select a security group which permits access to the ECS tasks
         Type: AWS::EC2::SecurityGroup::Id
@@ -58,7 +61,7 @@ Resources:
         DependsOn: ListenerRule
         Properties:
             Cluster: !Ref Cluster
-            LaunchType: "FARGATE"
+            LaunchType: FARGATE
             DesiredCount: !Ref DesiredCount
             TaskDefinition: !Ref TaskDefinition
             NetworkConfiguration:
@@ -66,10 +69,9 @@ Resources:
                     Subnets: !Ref Subnets
                     AssignPublicIp: ENABLED
                     SecurityGroups:
-                        - !Ref SecurityGroup
-
+                        - !Ref ECSServicesSecurityGroup
             LoadBalancers:
-                - ContainerName: "web-service"
+                - ContainerName: !Sub ${EnvironmentName}-WebService
                   ContainerPort: 4444
                   TargetGroupArn: !Ref TargetGroup
 
@@ -80,12 +82,12 @@ Resources:
             ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
             Cpu: 256
             Memory: 512
-            Family: web-service
+            Family: !Sub ${EnvironmentName}-WebService
             NetworkMode: awsvpc
             RequiresCompatibilities:
                 - FARGATE
             ContainerDefinitions:
-                - Name: web-service
+                - Name: !Sub ${EnvironmentName}-WebService
                   Command:
                       - server
                   Environment:
@@ -103,14 +105,14 @@ Resources:
                   LogConfiguration:
                       LogDriver: awslogs
                       Options:
-                          awslogs-group: !Ref AWS::StackName
+                          awslogs-group: !Sub ${EnvironmentName}-WebService
                           awslogs-region: !Ref AWS::Region
                           awslogs-stream-prefix: ecs
 
-    CloudWatchLogsGroup:
+    LogGroup:
         Type: AWS::Logs::LogGroup
         Properties:
-            LogGroupName: !Ref AWS::StackName
+            LogGroupName: !Sub ${EnvironmentName}-WebService
             RetentionInDays: 365
 
     TargetGroup:
@@ -122,7 +124,7 @@ Resources:
             Matcher:
                 HttpCode: 200-299
             HealthCheckIntervalSeconds: 10
-            HealthCheckPath: /
+            HealthCheckPath: /api
             HealthCheckProtocol: HTTP
             HealthCheckTimeoutSeconds: 5
             HealthyThresholdCount: 2
@@ -135,11 +137,11 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
         Properties:
             ListenerArn: !Ref Listener
-            Priority: 2
+            Priority: 1
             Conditions:
                 - Field: path-pattern
                   Values:
-                    - !Ref Path
+                    - "*"
             Actions:
                 - TargetGroupArn: !Ref TargetGroup
                   Type: forward
@@ -161,10 +163,6 @@ Resources:
 
 Outputs:
 
-    StackName:
-        Description: The name of the created stack
-        Value: !Ref AWS::StackName
-
     EcsServiceArn:
         Description: A reference to the created ECS service ARN
         Value: !Ref Service
@@ -172,3 +170,15 @@ Outputs:
     EcsTaskExecutionRoleArn:
         Description: A reference to the created IAM role ARN
         Value: !Ref TaskExecutionRole
+
+    WebServiceLogGroupName:
+        Description: The name of the CloudWatch log group for our web service
+        Value: !Sub ${EnvironmentName}-WebService
+
+    WebServiceContainerName:
+        Description: The name of the container in which our web service runs
+        Value: !Sub ${EnvironmentName}-WebService
+
+    WebServiceTaskFamilyName:
+        Description: The name task family for the web service
+        Value: !Sub ${EnvironmentName}-WebService
