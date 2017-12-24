@@ -1,0 +1,8 @@
+{
+    "containerOverrides": [
+        {
+            "name": "%TASK_CONTAINER_NAME%",
+            "command": ["migrate"]
+        }
+    ]
+}

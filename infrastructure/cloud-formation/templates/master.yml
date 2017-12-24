@@ -126,6 +126,14 @@ Outputs:
         Description: The name of the container in which our web service runs
         Value: !GetAtt EcsCluster.Outputs.WebServiceContainerName
 
+    PrivateSubnets:
+        Description: A list of the private subnets
+        Value: !GetAtt VPC.Outputs.PrivateSubnets
+
+    ECSServicesSecurityGroup:
+        Description: The security group attached to our ECS services
+        Value: !GetAtt SecurityGroups.Outputs.ECSServicesSecurityGroup
+
     DBURL:
         Description: URL used to connect to the RDS instance
         Value: !GetAtt Database.Outputs.DBURL

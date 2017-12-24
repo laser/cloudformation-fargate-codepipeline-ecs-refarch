@@ -53,6 +53,20 @@ DATABASE_URL=$(
         --query 'Stacks[0].Outputs[?OutputKey==`DBURL`].OutputValue' \
         --stack-name ${ENV_NAME_ARG} | jq -r '.[0]')
 
+PRIVATE_SUBNETS=$(
+    aws cloudformation \
+        describe-stacks \
+        --region us-east-1 \
+        --query 'Stacks[0].Outputs[?OutputKey==`PrivateSubnets`].OutputValue' \
+        --stack-name ${ENV_NAME_ARG} | jq -r '.[0]')
+
+ECS_SERVICE_SG=$(
+    aws cloudformation \
+        describe-stacks \
+        --region us-east-1 \
+        --query 'Stacks[0].Outputs[?OutputKey==`ECSServicesSecurityGroup`].OutputValue' \
+        --stack-name ${ENV_NAME_ARG} | jq -r '.[0]')
+
 SERVICE_REGION=$(echo ${SERVICE_ARN} | sed -e "s;.*ecs:;;g" -e "s;:.*;;g")
 
 SERVICE_NAME=$(echo ${SERVICE_ARN} | sed -e "s;.*/;;g")
@@ -68,11 +82,7 @@ sed -e "s;%IMAGE_TAG%;${IMAGE_TAG};g" \
     -e "s;%COMMAND_JSON_ARRAY%;\[\"server\"];g" \
     ./infrastructure/ci/templates/task-definition.json > ${TASK_FILE}
 
-cat ${TASK_FILE}
-
-set -x
-
-TASK_REVISION=$(
+TASK_DEFINITION_ARN=$(
     aws ecs \
         register-task-definition \
         --region us-east-1 \
@@ -83,12 +93,43 @@ TASK_REVISION=$(
         --task-role-arn ${TASK_EXECUTION_ROLE_ARN} \
         --execution-role-arn ${TASK_EXECUTION_ROLE_ARN} \
         --network-mode awsvpc \
-        --cli-input-json "file://${TASK_FILE}" | jq '.["taskDefinition"]["revision"]')
+        --cli-input-json "file://${TASK_FILE}" | jq -r '.["taskDefinition"]["taskDefinitionArn"]')
 
-aws ecs update-service --region us-east-1 --cluster ${ENV_NAME_ARG} --service ${SERVICE_NAME} --task-definition web-service:${TASK_REVISION}
+MIGRATION_OVERRIDES_FILE="./migrations-$(date +%s).json"
 
-set +x
+sed -e "s;%TASK_CONTAINER_NAME%;${CONTAINER_NAME};g" \
+    ./infrastructure/ci/templates/migration-overrides.json > ${MIGRATION_OVERRIDES_FILE}
+
+MIGRATION_TASK_ARN=$(aws ecs run-task \
+    --region us-east-1 \
+    --cluster ${ENV_NAME_ARG} \
+    --task-definition ${TASK_DEFINITION_ARN} \
+    --overrides file://${MIGRATION_OVERRIDES_FILE} \
+    --count 1 \
+    --started-by migrations \
+    --network-configuration awsvpcConfiguration="{subnets=[${PRIVATE_SUBNETS}],securityGroups=[${ECS_SERVICE_SG}],assignPublicIp=DISABLED}" \
+    --launch-type FARGATE | jq -r '.["tasks"][0]["taskArn"]')
+
+aws ecs wait tasks-stopped \
+    --region us-east-1 \
+    --cluster ${ENV_NAME_ARG} \
+    --tasks ${MIGRATION_TASK_ARN}
+
+MIGRATION_EXIT_CODE=$(aws ecs describe-tasks \
+    --region us-east-1 \
+    --cluster brazenface \
+    --tasks ${MIGRATION_TASK_ARN} | jq -r '.["tasks"][0]["containers"][0]["exitCode"]')
+
+if [ "${MIGRATION_EXIT_CODE}" -eq "0" ] ; then
+    aws ecs update-service \
+        --region us-east-1 \
+        --cluster ${ENV_NAME_ARG} \
+        --service ${SERVICE_NAME} \
+        --task-definition ${TASK_DEFINITION_ARN}
+    echo "$(date):${0##*/}:success"
+else
+    echo "$(date):${0##*/}:failure:migrations-failed"
+fi
 
 rm ${TASK_FILE}
-
-echo "$(date):${0##*/}:success"
+rm ${MIGRATION_OVERRIDES_FILE}
