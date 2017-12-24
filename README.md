@@ -177,3 +177,4 @@ To delete all the stacks you've created, run the following:
 - [ ] deploys with downtime
 - [ ] secrets in an S3 bucket
 - [ ] ENTRYPOINT shell versus exec form and interaction with Docker Compose
+- [ ] CircleCI executor types (machine versus docker)
