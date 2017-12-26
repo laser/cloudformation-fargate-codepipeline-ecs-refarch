@@ -158,16 +158,17 @@ To delete all the stacks you've created, run the following:
 
 ### TODO
 
+- [ ] replace embedded app with Rails
+- [ ] SSL
+- [ ] Route53
+- [ ] tailing (or equivalent) CloudWatch logs example
+- [ ] ensure that the ALB path is configured correctly (add more paths to app)
+- [ ] Code Pipeline + Code Deploy (or CircleCI)
+- [x] modify healthcheck to help differentiate from user requests in the logs
 - [x] RDS instance + app to read database
 - [x] provision an IAM user for CI and add AmazonEC2ContainerRegistryFullAccess policy
 - [x] deploy script should get container and task family names from stack output
-- [ ] one-off task to run migrations before updating service
-- [ ] tailing (or equivalent) CloudWatch logs example
-- [x] modify healthcheck to help differentiate from user requests in the logs
-- [ ] ensure that the ALB path is configured correctly (add more paths to app)
-- [ ] Code Pipeline + Code Deploy (or CircleCI)
-- [ ] SSL
-- [ ] Route53
+- [x] one-off task to run migrations before updating service
 
 ### Blog Post
 - [ ] COPY versus VOLUME during dev
