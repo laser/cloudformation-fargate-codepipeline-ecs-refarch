@@ -120,6 +120,9 @@ MIGRATION_EXIT_CODE=$(aws ecs describe-tasks \
     --cluster brazenface \
     --tasks ${MIGRATION_TASK_ARN} | jq -r '.["tasks"][0]["containers"][0]["exitCode"]')
 
+rm ${TASK_FILE}
+rm ${MIGRATION_OVERRIDES_FILE}
+
 if [ "${MIGRATION_EXIT_CODE}" -eq "0" ] ; then
     aws ecs update-service \
         --region us-east-1 \
@@ -128,8 +131,6 @@ if [ "${MIGRATION_EXIT_CODE}" -eq "0" ] ; then
         --task-definition ${TASK_DEFINITION_ARN}
     echo "$(date):${0##*/}:success"
 else
-    echo "$(date):${0##*/}:failure:migrations-failed"
+    echo "$(date):${0##*/}:failure:migrations-failed:${MIGRATION_TASK_ARN}"
+    return ${MIGRATION_EXIT_CODE}
 fi
-
-rm ${TASK_FILE}
-rm ${MIGRATION_OVERRIDES_FILE}
