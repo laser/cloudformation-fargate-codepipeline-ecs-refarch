@@ -6,7 +6,11 @@ ENV_NAME_ARG=$1
 
 GIT_SHA=$(git rev-parse --verify HEAD)
 
+set +x
+
 $(aws ecr get-login --no-include-email --region us-east-1)
+
+set -x
 
 REPOSITORY_URI=$(
     aws ecr \
