@@ -2,6 +2,5 @@
 
 set -e
 
-echo "$(date):migrations:running"
+ruby ./scripts/wait-for-db ${DATABASE_URL}
 rails db:migrate
-echo "$(date):migrations:success"

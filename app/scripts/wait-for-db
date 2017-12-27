@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+
+require "socket"
+require "uri"
+
+if ARGV[0]
+  url = URI.parse ARGV[0]
+  puts "Waiting for database..."
+  30.times do
+    begin
+      TCPSocket.new(url.host, url.port || 5432)
+      puts "Success!"
+      exit 0
+    rescue => e
+      print "."
+    end
+    sleep 1
+  end
+
+  exit 1
+else
+  STDERR.puts "No arguments; skipping"
+end

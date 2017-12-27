@@ -2,6 +2,5 @@
 
 set -e
 
-echo "$(date):tests:running"
+ruby ./scripts/wait-for-db ${DATABASE_URL}
 rails test
-echo "$(date):tests:success"
