@@ -3,8 +3,8 @@ services:
   app:
     build: .
     environment:
-      - RAILS_ENV=development
-      - RACK_ENV=development
+      - RAILS_ENV=test
+      - RACK_ENV=test
       - PORT=4444
       - DATABASE_URL=postgresql://disco:dasco@db:5432/app
     depends_on:
