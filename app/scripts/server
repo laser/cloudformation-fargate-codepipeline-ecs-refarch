@@ -3,5 +3,10 @@
 set -e
 
 rake tmp:clear
+
+if [ "${RAILS_ENV}" -eq "production" ] ; then
+    bundle exec rake assets:precompile
+fi
+
 ruby ./scripts/wait-for-db ${DATABASE_URL}
 rails server -b 0.0.0.0
