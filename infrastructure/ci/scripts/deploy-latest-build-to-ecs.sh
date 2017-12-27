@@ -86,7 +86,7 @@ TASK_DEFINITION_ARN=$(
     aws ecs \
         register-task-definition \
         --region us-east-1 \
-        --family web-service \
+        --family ${TASK_FAMILY_NAME} \
         --cpu 256 \
         --memory 512 \
         --requires-compatibilities FARGATE \
