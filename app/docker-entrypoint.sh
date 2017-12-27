@@ -4,5 +4,5 @@ set -e
 
 for CMD in "$@"
 do
-    ./scripts/${CMD}.sh
+    ./scripts/${CMD}
 done

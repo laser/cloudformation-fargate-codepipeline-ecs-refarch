@@ -5,7 +5,7 @@ require "uri"
 
 if ARGV[0]
   url = URI.parse ARGV[0]
-  puts "Waiting for database..."
+  puts "Waiting for database with URL=#{url}..."
   30.times do
     begin
       TCPSocket.new(url.host, url.port || 5432)
