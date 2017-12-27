@@ -1,13 +1,16 @@
-FROM python:3.6.3-alpine3.6
+FROM ruby:2.3.0-alpine
 
 MAINTAINER Erin Swenson-Healey <l@s3r.me>
 
 RUN apk add --update postgresql-dev \
-    gcc \
-    musl-dev
+    alpine-sdk \
+    sqlite-dev \
+    nodejs
 
-COPY requirements.txt /opt/
-RUN pip install -r /opt/requirements.txt
+COPY Gemfile* /tmp/
+WORKDIR /tmp
+
+RUN bundle update && bundle install
 
 COPY . /opt/
 

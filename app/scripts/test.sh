@@ -3,5 +3,5 @@
 set -e
 
 echo "$(date):tests:running"
-sleep 2
+rails test
 echo "$(date):tests:success"

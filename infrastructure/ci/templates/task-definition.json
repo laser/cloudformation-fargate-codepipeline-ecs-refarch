@@ -11,6 +11,14 @@
                 {
                     "name": "DATABASE_URL",
                     "value": "%DATABASE_URL%"
+                },
+                {
+                    "name": "RACK_ENV",
+                    "value": "production"
+                },
+                {
+                    "name": "RAILS_ENV",
+                    "value": "production"
                 }
             ],
             "command": %COMMAND_JSON_ARRAY%,

@@ -1,14 +1,15 @@
-version: "3"
+version: "2.1"
 services:
   app:
     build: .
-    ports:
-      - "2222:4444"
     environment:
+      - RAILS_ENV=development
+      - RACK_ENV=development
       - PORT=4444
       - DATABASE_URL=postgresql://disco:dasco@db:5432/app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     command: migrate test
   db:
     image: postgres:9.6.5-alpine
@@ -16,3 +17,8 @@ services:
       - POSTGRES_USER=disco
       - POSTGRES_PASSWORD=dasco
       - POSTGRES_DB=app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 30s
+      retries: 3

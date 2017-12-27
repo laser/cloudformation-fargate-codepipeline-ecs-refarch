@@ -3,5 +3,5 @@
 set -e
 
 echo "$(date):migrations:running"
-sleep 2
+rails db:migrate
 echo "$(date):migrations:success"

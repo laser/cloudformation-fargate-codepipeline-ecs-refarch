@@ -91,6 +91,10 @@ Resources:
                   Command:
                       - server
                   Environment:
+                      - Name: RACK_ENV
+                        Value: production
+                      - Name: RAILS_ENV
+                        Value: production
                       - Name: PORT
                         Value: 4444
                       - Name: DATABASE_URL
