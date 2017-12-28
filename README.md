@@ -2,14 +2,34 @@
 
 ![aws ecs reference architecture 2](https://user-images.githubusercontent.com/884507/34399624-d24950fe-eb3d-11e7-8c28-80afee284d53.png)
 
-Provision an Fargate-backed ECS cluster (and related infrastructure) with
-CloudFormation. Zero-downtime (blue/green) deploys are kicked off by a push to
-GitHub, via CircleCI. The application relies upon an RDS Postgres instance, also
-provisioned by Cloud Formation. Logs are sent to a CloudWatch group.
+## What's the Point?
 
-The deployed application is a slightly modified version of the [Rails Tutorial 4th ed.](https://bitbucket.org/railstutorial/sample_app_4th_ed) application. Locally, we simulate the AWS
-environment that our application will be running in through our use of Docker
-Compose.
+The purpose of this repository is to provide the necessary tools for a
+single-command provisioning of a high-availability, Fargate-backed ECS cluster
+to which you can deploy your application.
+
+The provided Cloud Formation templates can easily be extended to support
+multiple web services, to integrate with AWS CI/CD tools (in lieu of CircleCI),
+to use an Auto Scaling Group controlled by CloudWatch, _et cetera_.
+
+## What You'll Get
+
+After successfully creating the Cloud Formation stack and configuring CircleCI,
+you'll have:
+
+- a high-availability (multi-AZ) ECS cluster
+- a load balancer routing requests to 4 instances of a Rails 5 application connected to an RDS Postgres database
+- zero-downtime deploys from CircleCI to ECS
+- automatic application of cluster-safe migrations
+- centralized logging with CloudWatch
+- a human-readible (kinda) hostname (from the LB) at which you can point your web browser
+
+## What You Won't Get
+
+There are a few things deliberately omitted from this repository, namely:
+
+- CertificateManager/SSL support
+- Zone53/DNS integration
 
 ## Local Development
 
@@ -53,7 +73,7 @@ stack creation process.
 ./infrastructure/cloud-formation/scripts/create-stacks.sh ${MASTER_STACK_NAME}
 ```
 
-Once your stack reaches the `CREATE COMPLETE` state, you're ready to proceed.
+Once your stack reaches the `CREATE_COMPLETE` state, you're ready to proceed.
 
 ### 2. Configure CircleCI
 
