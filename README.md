@@ -1,14 +1,13 @@
 # cloud-formation-ecs-docker-circle-ci
 
-
+![aws ecs reference architecture-2](https://user-images.githubusercontent.com/884507/34399298-fe1613fa-eb3a-11e7-94dc-c592dcaa77d3.png)
 
 Provision an Fargate-backed ECS cluster (and related infrastructure) with
 CloudFormation. Zero-downtime (blue/green) deploys are kicked off by a push to
 GitHub, via CircleCI. The application relies upon an RDS Postgres instance, also
 provisioned by Cloud Formation. Logs are sent to a CloudWatch group.
 
-The deployed application is a simple web server which responds to HTTP requests
-with the contents of an HTML file, `index.html`. Locally, we simulate the AWS
+The deployed application is a slightly modified version of the [Rails Tutorial 4th ed.](https://bitbucket.org/railstutorial/sample_app_4th_ed) application. Locally, we simulate the AWS
 environment that our application will be running in through our use of Docker
 Compose.
 
