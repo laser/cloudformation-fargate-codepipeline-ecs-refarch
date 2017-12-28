@@ -53,16 +53,38 @@ stack creation process.
 ./infrastructure/cloud-formation/scripts/create-stacks.sh ${MASTER_STACK_NAME}
 ```
 
-#### Bonus: Updating the Main Stack
+Once your stack reaches the `CREATE COMPLETE` state, you're ready to proceed.
 
-To tell Cloud Formation about changes you've made to the master stack's YAML
-files, run:
+### 2. Configure CircleCI
+
+First, obtain the AWS secret key and AWS access key id that was provisioned for
+your stack:
 
 ```sh
-./infrastructure/cloud-formation/scripts/update-master-stack.sh ${MASTER_STACK_NAME}
+# access key id
+aws cloudformation \
+    describe-stacks \
+    --region us-east-1 \
+    --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationAccessKeyId`].OutputValue' \
+    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g")
+
+# secret access key
+aws cloudformation \
+    describe-stacks \
+    --region us-east-1 \
+    --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationSecretAccessKey`].OutputValue' \
+    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g")
 ```
 
-### 2. CI: Updating the ECS Service
+Then, log into CircleCI and configure a new project for your fork. When you've
+done that, add a new environment variable (see _Build Setting_ section of the
+settings screen's left-hand sidebar) called `MASTER_STACK_NAME` whose value is
+whatever you've been using in place of `${MASTER_STACK_NAME}`. Finally, add the
+AWS key id and AWS secret access key to your project's settings via the
+_Permissions_ section of the settings screen's left-hand sidebar. The next push
+you make to your GitHub-hosted repo should kick off a build (and deploy).
+
+### 3. Trigger a Build
 
 Simulate something that a developer would do, e.g. update the app:
 
@@ -72,30 +94,9 @@ perl -e \
         | { read palabra; sed -i -e "s/\(<marquee>\).*\(<\/marquee>\)/<marquee>${palabra}<\/marquee>/g" ./app/app/views/static_pages/about.html.erb; }
 ```
 
-Log in to ECR:
-
-```sh
-$(aws ecr get-login --no-include-email --region us-east-1)
-```
-
-Build the Docker image:
-
-```sh
-docker-compose -p app -f ./app/docker-compose.yml build
-```
-
-and push to ECR (CI would typically do this):
-
-```sh
-./infrastructure/ci/scripts/tag-image-and-push-to-ecr.sh ${MASTER_STACK_NAME}
-```
-
-Update the ECS service such that it uses the new task definition (CI would
-typically do this):
-
-```sh
-./infrastructure/ci/scripts/deploy-latest-build-to-ecs.sh ${MASTER_STACK_NAME}
-```
+Then, simply push your changes to your repository's `master` branch. You should 
+see your changes being built. Once the build is complete, ECS will perform a
+blue/green deploy to your cluster.
 
 ### 3. Interact with the Application
 
@@ -118,41 +119,23 @@ while true; do curl -v $(aws cloudformation \
    --stack-name ${MASTER_STACK_NAME} | jq '.[0]' | sed -e "s;\";;g"); sleep 1; done
 ```
 
-### 4. Configure CircleCI
+Note: It can take a few minutes for a successful build to make its way to the ECS cluster.
 
-First, obtain the AWS secret key and AWS access key id that was provisioned for
-your stack:
-
-```sh
-# access key id
-aws cloudformation \
-    describe-stacks \
-    --region us-east-1 \
-    --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationAccessKeyId`].OutputValue' \
-    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g")
-
-# secret access key
-aws cloudformation \
-    describe-stacks \
-    --region us-east-1 \
-    --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationSecretAccessKey`].OutputValue' \
-    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g")
-```
-
-Then, log into CircleCI and configure a new project using your fork. When you've
-done that, add a new environment variable (see _Build Setting_ section of the
-settings screen's left-hand sidebar) called `MASTER_STACK_NAME` whose value is
-whatever you've been using in place of `${MASTER_STACK_NAME}`. Finally, add the
-AWS key id and AWS secret access key to your project's settings via the
-_Permissions_ section of the settings screen's left-hand sidebar. The next push
-you make to your GitHub-hosted repo should kick off a build (and deploy).
-
-### 5. Deleting Everything
+### 4. Deleting Everything
 
 To delete all the stacks you've created, run the following:
 
 ```sh
 ./infrastructure/cloud-formation/delete-stacks.sh $MASTER_STACK_NAME
+```
+
+### 5. Messing with the Cloud Formation Templates
+
+If you've made changes to the Cloud Formation YAML and want to see those changes
+reflected in your stack, run the following:
+
+```sh
+./infrastructure/cloud-formation/scripts/update-master-stack.sh ${MASTER_STACK_NAME}
 ```
 
 ### TODO
