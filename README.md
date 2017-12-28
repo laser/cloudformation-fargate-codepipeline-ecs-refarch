@@ -6,7 +6,9 @@
 
 The purpose of this repository is to provide the necessary tools for a
 single-command provisioning of a high-availability, Fargate-backed ECS cluster
-to which you can deploy your application.
+to which you can deploy your application. *The included templates, CircleCI
+configuration, and shell scripts should be reviewed before you use them in a 
+production environment.*
 
 The provided Cloud Formation templates can easily be extended to support
 multiple web services, to integrate with AWS CI/CD tools (in lieu of CircleCI),
