@@ -66,14 +66,14 @@ aws cloudformation \
     describe-stacks \
     --region us-east-1 \
     --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationAccessKeyId`].OutputValue' \
-    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g")
+    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g"
 
 # secret access key
 aws cloudformation \
     describe-stacks \
     --region us-east-1 \
     --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationSecretAccessKey`].OutputValue' \
-    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g")
+    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g"
 ```
 
 Then, log into CircleCI and configure a new project for your fork. When you've
@@ -94,7 +94,7 @@ perl -e \
         | { read palabra; sed -i -e "s/\(<marquee>\).*\(<\/marquee>\)/<marquee>${palabra}<\/marquee>/g" ./app/app/views/static_pages/about.html.erb; }
 ```
 
-Then, simply push your changes to your repository's `master` branch. You should 
+Then, simply push your changes to your repository's `master` branch. You should
 see your changes being built. Once the build is complete, ECS will perform a
 blue/green deploy to your cluster.
 
