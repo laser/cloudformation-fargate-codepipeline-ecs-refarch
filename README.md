@@ -70,7 +70,7 @@ Simulate something that a developer would do, e.g. update the app:
 ```sh
 perl -e \
     'open IN, "</usr/share/dict/words";rand($.) < 1 && ($n=$_) while <IN>;print $n' \
-        | { read palabra; sed -i -e "s/\(<body>\).*\(<\/body>\)/<body>${palabra}<\/body>/g" ./app/index.html; }
+        | { read palabra; sed -i -e "s/\(<marquee>\).*\(<\/marquee>\)/<marquee>${palabra}<\/marquee>/g" ./app/app/views/static_pages/about.html.erb; }
 ```
 
 Log in to ECR:
