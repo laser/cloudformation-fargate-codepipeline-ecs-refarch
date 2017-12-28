@@ -1,6 +1,6 @@
 # cloud-formation-ecs-docker-circle-ci
 
-![aws ecs reference architecture-2](https://user-images.githubusercontent.com/884507/34399298-fe1613fa-eb3a-11e7-94dc-c592dcaa77d3.png)
+![aws ecs reference architecture 2](https://user-images.githubusercontent.com/884507/34399624-d24950fe-eb3d-11e7-8c28-80afee284d53.png)
 
 Provision an Fargate-backed ECS cluster (and related infrastructure) with
 CloudFormation. Zero-downtime (blue/green) deploys are kicked off by a push to
