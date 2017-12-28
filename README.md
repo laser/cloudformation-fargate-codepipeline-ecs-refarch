@@ -66,14 +66,14 @@ aws cloudformation \
     describe-stacks \
     --region us-east-1 \
     --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationAccessKeyId`].OutputValue' \
-    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g"
+    --stack-name ${MASTER_STACK_NAME}-ecr | jq -r '.[0]'
 
 # secret access key
 aws cloudformation \
     describe-stacks \
     --region us-east-1 \
     --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationSecretAccessKey`].OutputValue' \
-    --stack-name ${MASTER_STACK_NAME}-ecr | jq '.[0]' | sed -e "s;\";;g"
+    --stack-name ${MASTER_STACK_NAME}-ecr | jq -r '.[0]'
 ```
 
 Then, log into CircleCI and configure a new project for your fork. When you've
