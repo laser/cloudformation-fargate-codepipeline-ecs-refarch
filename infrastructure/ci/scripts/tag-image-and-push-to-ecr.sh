@@ -19,8 +19,8 @@ REPOSITORY_URI=$(
         --repository-names ${ENV_NAME_ARG} \
         --query 'repositories[0].repositoryUri' | sed -e 's;\";;g')
 
-docker tag app_app ${REPOSITORY_URI}:latest
-docker tag app_app ${REPOSITORY_URI}:${GIT_SHA}
+docker tag websvc_websvc ${REPOSITORY_URI}:latest
+docker tag websvc_websvc ${REPOSITORY_URI}:${GIT_SHA}
 
 docker push ${REPOSITORY_URI}:latest
 docker push ${REPOSITORY_URI}:${GIT_SHA}

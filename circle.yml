@@ -2,9 +2,6 @@ version: 2
 
 jobs:
     build:
-        branches:
-            only:
-                - master
         machine: true
         steps:
           - checkout
@@ -26,13 +23,14 @@ jobs:
               name: Build the Docker image
               command: |
                 set -x
-                docker-compose -p app -f ./app/docker-compose.ci.yml build && docker-compose -f ./app/docker-compose.ci.yml pull
+                docker-compose -p websvc -f ./websvc/docker-compose.yml build && docker-compose -f ./websvc/docker-compose.yml pull
 
           - run:
               name: Run tests in the app container
               command: |
                 set -x
-                docker-compose -f ./app/docker-compose.ci.yml run app test
+                docker-compose -f ./websvc/docker-compose.yml run --rm  websvc "ruby ./wait-for-postgres.rb && rails db:migrate && rails db:test:prepare"
+                docker-compose -f ./websvc/docker-compose.yml run --rm  websvc "ruby ./wait-for-postgres.rb && rails test"
 
           - run:
               name: Push the newly-deployed image to ECR
