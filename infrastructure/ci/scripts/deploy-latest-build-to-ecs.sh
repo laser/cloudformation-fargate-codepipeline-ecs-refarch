@@ -117,7 +117,7 @@ aws ecs wait tasks-stopped \
 
 MIGRATION_EXIT_CODE=$(aws ecs describe-tasks \
     --region us-east-1 \
-    --cluster brazenface \
+    --cluster ${ENV_NAME_ARG} \
     --tasks ${MIGRATION_TASK_ARN} | jq -r '.["tasks"][0]["containers"][0]["exitCode"]')
 
 rm ${TASK_FILE}
