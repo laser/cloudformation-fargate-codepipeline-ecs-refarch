@@ -80,7 +80,7 @@ Resources:
             ContainerDefinitions:
                 - Name: !Sub ${EnvironmentName}-WebService
                   Command:
-                      - !Sub "rails db:migrate && rails assets:precompile && rails server -p 4444 -b 0.0.0.0"
+                      - !Sub "rails db:migrate && rails assets:precompile && rails server -b 0.0.0.0"
                   Environment:
                       - Name: RAILS_SERVE_STATIC_FILES
                         Value: true
@@ -88,6 +88,8 @@ Resources:
                         Value: true
                       - Name: RAILS_ENV
                         Value: production
+                      - Name: PORT
+                        Value: 4444
                       - Name: DATABASE_URL
                         Value: !Ref DBURL
                       - Name: SECRET_KEY_BASE
