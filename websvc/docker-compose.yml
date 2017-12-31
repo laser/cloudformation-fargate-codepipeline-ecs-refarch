@@ -4,7 +4,7 @@ services:
   websvc:
     build: .
     ports:
-      - "3000:3000"
+      - "3333:3000"
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=postgresql://tattersail:whiskeyjack@websvcdb:5432/app_development
