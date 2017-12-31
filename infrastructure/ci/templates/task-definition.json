@@ -13,15 +13,23 @@
                     "value": "%DATABASE_URL%"
                 },
                 {
-                    "name": "RACK_ENV",
+                    "name": "RAILS_ENV",
                     "value": "production"
                 },
                 {
-                    "name": "RAILS_ENV",
-                    "value": "production"
+                    "name": "RAILS_SERVE_STATIC_FILES",
+                    "value": "true"
+                },
+                {
+                    "name": "RAILS_LOG_TO_STDOUT",
+                    "value": "true"
+                },
+                {
+                    "name": "SECRET_KEY_BASE",
+                    "value": "72971829c1b11f427d6539a5340eff94f61e5ab19c38ed01a08d0290280189fb83f4fd07735fd8e69c1eed6de2fdab789dbbad6afbe4225de02cb6895aff8bba"
                 }
             ],
-            "command": %COMMAND_JSON_ARRAY%,
+            "command": ["rails db:migrate && rails assets:precompile && rails server -b 0.0.0.0"],
             "essential": true,
             "image": "%IMAGE_TAG%",
             "portMappings": [

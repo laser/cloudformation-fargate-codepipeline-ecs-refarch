@@ -79,7 +79,6 @@ sed -e "s;%IMAGE_TAG%;${IMAGE_TAG};g" \
     -e "s;%DATABASE_URL%;${DATABASE_URL};g" \
     -e "s;%TASK_FAMILY_NAME%;${TASK_FAMILY_NAME};g" \
     -e "s;%TASK_CONTAINER_NAME%;${CONTAINER_NAME};g" \
-    -e "s;%COMMAND_JSON_ARRAY%;\[\"server\"];g" \
     ./infrastructure/ci/templates/task-definition.json > ${TASK_FILE}
 
 TASK_DEFINITION_ARN=$(
@@ -117,7 +116,7 @@ aws ecs wait tasks-stopped \
 
 MIGRATION_EXIT_CODE=$(aws ecs describe-tasks \
     --region us-east-1 \
-    --cluster brazenface \
+    --cluster ${ENV_NAME_ARG} \
     --tasks ${MIGRATION_TASK_ARN} | jq -r '.["tasks"][0]["containers"][0]["exitCode"]')
 
 rm ${TASK_FILE}

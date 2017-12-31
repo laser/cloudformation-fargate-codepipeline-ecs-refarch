@@ -49,7 +49,7 @@ aws s3 sync \
 # Build the application and push to ECR
 #
 
-docker-compose -p app -f ./app/docker-compose.yml build
+docker-compose -p websvc -f ./websvc/docker-compose.yml build
 ./infrastructure/ci/scripts/tag-image-and-push-to-ecr.sh ${ENV_NAME_ARG}
 
 

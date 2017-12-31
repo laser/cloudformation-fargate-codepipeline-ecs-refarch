@@ -7,7 +7,7 @@
 The purpose of this repository is to provide the necessary tools for a
 single-command provisioning of a high-availability, Fargate-backed ECS cluster
 to which you can deploy your application. *The included templates, CircleCI
-configuration, and shell scripts should be reviewed before you use them in a 
+configuration, and shell scripts should be reviewed before you use them in a
 production environment.*
 
 The provided Cloud Formation templates can easily be extended to support
@@ -20,7 +20,7 @@ After successfully creating the Cloud Formation stack and configuring CircleCI,
 you'll have:
 
 - a high-availability (multi-AZ) ECS cluster
-- a load balancer routing requests to 4 instances of a Rails 5 application connected to an RDS Postgres database
+- a load balancer routing requests to 2 instances of a Rails 5 application connected to an RDS Postgres database
 - zero-downtime deploys from CircleCI to ECS
 - automatic application of cluster-safe migrations
 - centralized logging with CloudWatch

@@ -1,8 +1,0 @@
-#!/bin/ash
-
-set -e
-
-ruby ./scripts/wait-for-db ${DATABASE_URL}
-echo "$(date):migrations:running"
-rails db:migrate
-echo "$(date):migrations:success"

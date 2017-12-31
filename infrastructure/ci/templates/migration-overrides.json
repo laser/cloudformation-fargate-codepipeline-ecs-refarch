@@ -2,7 +2,7 @@
     "containerOverrides": [
         {
             "name": "%TASK_CONTAINER_NAME%",
-            "command": ["migrate"]
+            "command": ["rails db:migrate"]
         }
     ]
 }
