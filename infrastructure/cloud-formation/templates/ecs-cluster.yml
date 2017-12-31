@@ -130,7 +130,7 @@ Resources:
             TargetType: ip
             TargetGroupAttributes:
                 - Key: deregistration_delay.timeout_seconds
-                Value: '10'
+                  Value: '10'
 
     ListenerRule:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
