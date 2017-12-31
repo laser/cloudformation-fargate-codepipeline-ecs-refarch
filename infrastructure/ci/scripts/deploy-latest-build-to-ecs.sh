@@ -79,7 +79,6 @@ sed -e "s;%IMAGE_TAG%;${IMAGE_TAG};g" \
     -e "s;%DATABASE_URL%;${DATABASE_URL};g" \
     -e "s;%TASK_FAMILY_NAME%;${TASK_FAMILY_NAME};g" \
     -e "s;%TASK_CONTAINER_NAME%;${CONTAINER_NAME};g" \
-    -e "s;%COMMAND_JSON_ARRAY%;\[\"rails db:migrate && rails assets:precompile && rails server -p 4444 -b 0.0.0.0\"];g" \
     ./infrastructure/ci/templates/task-definition.json > ${TASK_FILE}
 
 TASK_DEFINITION_ARN=$(
