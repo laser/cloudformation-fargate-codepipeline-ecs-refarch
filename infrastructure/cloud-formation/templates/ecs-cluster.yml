@@ -5,39 +5,20 @@ Description: >
 Parameters:
 
     VPC:
-        Description: The VPC that the ECS cluster is deployed to
         Type: AWS::EC2::VPC::Id
-
-    DesiredCount:
-        Description: >
-            How many instances of this task should we run across our cluster?
-        Type: Number
-
     Listener:
-        Description: The Application Load Balancer listener to register with
         Type: String
-
     EnvironmentName:
-        Description: >
-            An environment name that will be prefixed to (or used to create)
-            resource names
         Type: String
-
     Subnets:
-        Description: >
-            Choose which subnets the Application Load Balancer should be
-            deployed to
         Type: List<AWS::EC2::Subnet::Id>
-
     ECSServicesSecurityGroup:
-        Description: >
-            Select a security group which permits access to the ECS tasks
         Type: AWS::EC2::SecurityGroup::Id
-
     DBURL:
-        Description: >
-            A Postgres URL that the application will use to connect to the RDS
-            instance
+        Type: String
+    RepositoryUri:
+        Type: String
+    RailsSecretKeyBase:
         Type: String
 
 Resources:
@@ -53,7 +34,7 @@ Resources:
         Properties:
             Cluster: !Ref Cluster
             LaunchType: FARGATE
-            DesiredCount: !Ref DesiredCount
+            DesiredCount: 2
             TaskDefinition: !Ref TaskDefinition
             NetworkConfiguration:
                 AwsvpcConfiguration:
@@ -62,7 +43,7 @@ Resources:
                     SecurityGroups:
                         - !Ref ECSServicesSecurityGroup
             LoadBalancers:
-                - ContainerName: !Sub ${EnvironmentName}-WebService
+                - ContainerName: !Ref EnvironmentName
                   ContainerPort: 4444
                   TargetGroupArn: !Ref TargetGroup
 
@@ -73,12 +54,12 @@ Resources:
             ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
             Cpu: 256
             Memory: 512
-            Family: !Sub ${EnvironmentName}-WebService
+            Family: !Ref EnvironmentName
             NetworkMode: awsvpc
             RequiresCompatibilities:
                 - FARGATE
             ContainerDefinitions:
-                - Name: !Sub ${EnvironmentName}-WebService
+                - Name: !Ref EnvironmentName
                   Command:
                       - !Sub "rails db:migrate && rails assets:precompile && rails server -b 0.0.0.0"
                   Environment:
@@ -93,25 +74,22 @@ Resources:
                       - Name: DATABASE_URL
                         Value: !Ref DBURL
                       - Name: SECRET_KEY_BASE
-                        Value: 72971829c1b11f427d6539a5340eff94f61e5ab19c38ed01a08d0290280189fb83f4fd07735fd8e69c1eed6de2fdab789dbbad6afbe4225de02cb6895aff8bba
+                        Value: !Ref RailsSecretKeyBase
                   Essential: true
-
-                  # TODO: replace below with a Parameter
-                  Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EnvironmentName}:latest
-
+                  Image: !Sub ${RepositoryUri}:latest
                   PortMappings:
                       - ContainerPort: 4444
                   LogConfiguration:
                       LogDriver: awslogs
                       Options:
-                          awslogs-group: !Sub ${EnvironmentName}-WebService
+                          awslogs-group: !Ref EnvironmentName
                           awslogs-region: !Ref AWS::Region
                           awslogs-stream-prefix: ecs
 
     LogGroup:
         Type: AWS::Logs::LogGroup
         Properties:
-            LogGroupName: !Sub ${EnvironmentName}-WebService
+            LogGroupName: !Ref EnvironmentName
             RetentionInDays: 365
 
     TargetGroup:
@@ -166,18 +144,22 @@ Outputs:
         Description: A reference to the created ECS service ARN
         Value: !Ref Service
 
+    EcsClusterName:
+        Description: A reference to the created ECS service ARN
+        Value: !Ref Cluster
+
     EcsTaskExecutionRoleArn:
         Description: A reference to the created IAM role ARN
         Value: !Ref TaskExecutionRole
 
     WebServiceLogGroupName:
         Description: The name of the CloudWatch log group for our web service
-        Value: !Sub ${EnvironmentName}-WebService
+        Value: !Ref EnvironmentName
 
     WebServiceContainerName:
         Description: The name of the container in which our web service runs
-        Value: !Sub ${EnvironmentName}-WebService
+        Value: !Ref EnvironmentName
 
     WebServiceTaskFamilyName:
         Description: The name task family for the web service
-        Value: !Sub ${EnvironmentName}-WebService
+        Value: !Ref EnvironmentName

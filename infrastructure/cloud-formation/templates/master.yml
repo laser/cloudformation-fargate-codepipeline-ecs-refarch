@@ -16,31 +16,20 @@ Parameters:
         Description: >
             An S3 key prefix which will be used to resolve referenced templates
         Type: String
-
-    DBMasterUsername:
-        Description: The master username for our RDS instance
+    GitHubBranch:
         Type: String
-        Default: rinkydink
-
-    DBMasterUserPassword:
-        Description: The master password for our RDS instance
+    GitHubUser:
         Type: String
-        Default: smurfmagnet
-
-    DBInstanceClass:
-        Description: Instance class for RDS instance
+    GitHubRepo:
         Type: String
-        Default: db.t2.micro
-
-    DBEngine:
-        Description: RDS instance-engine (e.g. postgres)
+    GitHubToken:
         Type: String
-        Default: postgres
-
-    DBEngineVersion:
-        Description: RDS instance version number (e.g. 9.6.5)
+    RepositoryUri:
         Type: String
-        Default: 9.6.5
+    RepositoryArn:
+        Type: String
+    RailsSecretKeyBase:
+        Type: String
 
 Resources:
     VPC:
@@ -80,25 +69,36 @@ Resources:
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 DBSecurityGroup: !GetAtt SecurityGroups.Outputs.RDSInstanceSecurityGroup
-                DBMasterUsername: !Ref DBMasterUsername
-                DBMasterUserPassword: !Ref DBMasterUserPassword
                 DBSubnetGroupName: !GetAtt VPC.Outputs.DBSubnetGroup
-                DBInstanceClass: !Ref DBInstanceClass
-                DBEngineVersion: !Ref DBEngineVersion
-                DBEngine: !Ref DBEngine
 
     EcsCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: !Sub ${S3TemplateKeyPrefix}ecs-cluster.yml
             Parameters:
+                RepositoryUri: !Ref RepositoryUri
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
-                DesiredCount: 2
                 Listener: !GetAtt ALB.Outputs.Listener
                 ECSServicesSecurityGroup: !GetAtt SecurityGroups.Outputs.ECSServicesSecurityGroup
                 DBURL: !GetAtt Database.Outputs.DBURL
+                RailsSecretKeyBase: !Ref RailsSecretKeyBase
+
+    DeploymentPipeline:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: !Sub ${S3TemplateKeyPrefix}deployment-pipeline.yml
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                ClusterName: !GetAtt EcsCluster.Outputs.EcsClusterName
+                ServiceArn: !GetAtt EcsCluster.Outputs.EcsServiceArn
+                RepositoryArn: !Ref RepositoryArn
+                RepositoryUri: !Ref RepositoryUri
+                GitHubUser: !Ref GitHubUser
+                GitHubBranch: !Ref GitHubBranch
+                GitHubRepo: !Ref GitHubRepo
+                GitHubToken: !Ref GitHubToken
 
 Outputs:
 
@@ -137,3 +137,7 @@ Outputs:
     DBURL:
         Description: URL used to connect to the RDS instance
         Value: !GetAtt Database.Outputs.DBURL
+
+    PipelineUrl:
+        Description: The continuous deployment pipeline in the AWS Management Console.
+        Value: !GetAtt DeploymentPipeline.Outputs.PipelineUrl

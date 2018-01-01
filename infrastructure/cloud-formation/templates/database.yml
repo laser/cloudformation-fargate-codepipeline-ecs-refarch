@@ -1,13 +1,6 @@
 Description: >
     This stack provisions the RDS instance which will be used by our app.
 
-Mappings:
-    DBEngineToDBURLScheme:
-        postgres:
-            Value: postgresql
-        mysql:
-            Value: mysql
-
 Parameters:
 
     EnvironmentName:
@@ -18,32 +11,9 @@ Parameters:
         Description: Select the Security Group to apply to the RDS instance
         Type: AWS::EC2::SecurityGroup::Id
 
-    DBMasterUsername:
-        Description: The master user name for the DB instance.
-        Type: String
-
-    DBMasterUserPassword:
-        Description: The master password for the DB instance.
-        Type: String
-
     DBSubnetGroupName:
         Description: A DB subnet group to associate with the DB instance.
         Type: String
-
-    DBInstanceClass:
-        Description: Instance class for the RDS instance
-        Type: String
-
-    DBEngineVersion:
-        Description: Engine version number (e.g. 9.6.5)
-        Type: String
-
-    DBEngine:
-        Description: Database engine (e.g. postgres)
-        Type: String
-        AllowedValues:
-            - postgres
-            - mysql
 
 Resources:
 
@@ -53,15 +23,15 @@ Resources:
             AllocatedStorage: 5
             AutoMinorVersionUpgrade: true
             BackupRetentionPeriod: 0
-            DBInstanceClass: !Ref DBInstanceClass
+            DBInstanceClass: db.t2.micro
             DBName: !Ref EnvironmentName
             VPCSecurityGroups:
                 - !Ref DBSecurityGroup
             DBSubnetGroupName: !Ref DBSubnetGroupName
-            Engine: !Ref DBEngine
-            EngineVersion: !Ref DBEngineVersion
-            MasterUsername: !Ref DBMasterUsername
-            MasterUserPassword: !Ref DBMasterUserPassword
+            Engine: postgres
+            EngineVersion: 9.6.5
+            MasterUsername: rinkydink
+            MasterUserPassword: smurfmagnet
             MultiAZ: true
 
 Outputs:
@@ -83,11 +53,7 @@ Outputs:
       Value:
         Fn::Join:
             - ""
-            - - !FindInMap [DBEngineToDBURLScheme, !Ref DBEngine, Value]
-              - "://"
-              - !Ref DBMasterUsername
-              - ":"
-              - !Ref DBMasterUserPassword
+            - - "postgresql://rinkydink:smurfmagnet"
               - "@"
               - !GetAtt Database.Endpoint.Address
               - ":"
