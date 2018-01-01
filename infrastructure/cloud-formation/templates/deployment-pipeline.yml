@@ -120,6 +120,8 @@ Resources:
             build:
               commands:
                 - docker-compose -p websvc -f ./websvc/docker-compose.yml build && docker-compose -f ./websvc/docker-compose.yml pull
+                - docker-compose -f ./websvc/docker-compose.yml run --rm  websvc "ruby ./wait-for-postgres.rb && rails db:migrate && rails db:test:prepare"
+                - docker-compose -f ./websvc/docker-compose.yml run --rm  websvc "ruby ./wait-for-postgres.rb && rails test"
                 - docker tag websvc_websvc "$IMAGE_URI"
             post_build:
               commands:
