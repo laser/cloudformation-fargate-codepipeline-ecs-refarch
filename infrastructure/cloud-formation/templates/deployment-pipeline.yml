@@ -119,7 +119,8 @@ Resources:
                 - IMAGE_URI="$REPOSITORY_URI:$TAG"
             build:
               commands:
-                - docker build --tag "$IMAGE_URI" .
+                - docker-compose -p websvc -f ./websvc/docker-compose.yml build && docker-compose -f ./websvc/docker-compose.yml pull
+                - docker tag websvc_websvc "$IMAGE_URI"
             post_build:
               commands:
                 - docker push "$IMAGE_URI"
