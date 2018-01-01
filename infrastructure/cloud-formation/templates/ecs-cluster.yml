@@ -151,15 +151,3 @@ Outputs:
     EcsTaskExecutionRoleArn:
         Description: A reference to the created IAM role ARN
         Value: !Ref TaskExecutionRole
-
-    WebServiceLogGroupName:
-        Description: The name of the CloudWatch log group for our web service
-        Value: !Ref EnvironmentName
-
-    WebServiceContainerName:
-        Description: The name of the container in which our web service runs
-        Value: !Ref EnvironmentName
-
-    WebServiceTaskFamilyName:
-        Description: The name task family for the web service
-        Value: !Ref EnvironmentName

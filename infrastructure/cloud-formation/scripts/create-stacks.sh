@@ -54,20 +54,24 @@ aws s3 sync \
 #
 
 docker-compose -p websvc -f ./websvc/docker-compose.yml build
-./infrastructure/ci/scripts/tag-image-and-push-to-ecr.sh ${ENV_NAME_ARG}
 
-
-###############################################################################
-# Create the main stack (which relies upon the built image in ECR)
-#
-
-RAILS_SECRET_KEY_BASE=$(docker-compose -p websvc -f ./websvc/docker-compose.yml run --rm websvc "rails secret")
+$(aws ecr get-login --no-include-email --region us-east-1)
 
 REPOSITORY_URI=$(aws ecr \
     describe-repositories \
     --region us-east-1 \
     --query "repositories[?repositoryName==\`${ENV_NAME_ARG}\`].repositoryUri" \
     | jq -r '.[0]')
+
+docker tag websvc_websvc ${REPOSITORY_URI}:latest
+
+docker push ${REPOSITORY_URI}:latest
+
+###############################################################################
+# Create the main stack (which relies upon the built image in ECR)
+#
+
+RAILS_SECRET_KEY_BASE=$(docker-compose -p websvc -f ./websvc/docker-compose.yml run --rm websvc "rails secret")
 
 REPOSITORY_ARN=$(aws ecr \
     describe-repositories \

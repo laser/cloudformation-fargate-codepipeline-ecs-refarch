@@ -6,22 +6,20 @@
 
 The purpose of this repository is to provide the necessary tools for a
 single-command provisioning of a high-availability, Fargate-backed ECS cluster
-to which you can deploy your application. *The included templates, CircleCI
-configuration, and shell scripts should be reviewed before you use them in a
-production environment.*
+to which you can deploy your application. *The included templates and shell
+scripts should be reviewed before you use them in a production environment.*
 
 The provided Cloud Formation templates can easily be extended to support
-multiple web services, to integrate with AWS CI/CD tools (in lieu of CircleCI),
-to use an Auto Scaling Group controlled by CloudWatch, _et cetera_.
+multiple web services, to use some other web application framework, to use an
+Auto Scaling Group controlled by CloudWatch, _et cetera_.
 
 ## What You'll Get
 
-After successfully creating the Cloud Formation stack and configuring CircleCI,
-you'll have:
+After successfully creating the Cloud Formation stack you'll have:
 
 - a high-availability (multi-AZ) ECS cluster
-- a load balancer routing requests to 2 instances of a Rails 5 application connected to an RDS Postgres database
-- zero-downtime deploys from CircleCI to ECS
+- a load balancer routing requests to 2 instances (one in each AZ) of a Rails 5 application connected to an RDS Postgres database
+- zero-downtime deploys to ECS via AWS Code Pipeline
 - automatic application of cluster-safe migrations
 - centralized logging with CloudWatch
 - a human-readible (kinda) hostname (from the LB) at which you can point your web browser
@@ -54,15 +52,21 @@ curl -v 'http://localhost:3333'
 - [Docker Compose](https://docs.docker.com/compose/)
 - [AWS CLI](https://github.com/aws/aws-cli) version >= `1.14.11` configured to use the `us-east-1` as its default region (for Fargate support)
 - [jq](https://github.com/stedolan/jq) version >= `jq-1.5`, for querying stack output-JSON
-- an AWS [access key id and secret access key](http://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html)
-- a fork of this repository (so that you can integrate with CircleCI)
+- an AWS [access key id and secret access key](http://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html) which has admin-level permissions for your AWS account
+- a fork of this repository (so that you can integrate with AWS Code Pipeline)
+
+### 1. Create a GitHub Personal Token for CI
+
+Go [here](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)
+and follow the steps to create a personal access token for AWS Code Pipeline.
+The token must have access to the `repo` scope. Store this token somewhere.
 
 ### 1. Create the Stacks
 
-First, pick an alphanumeric name for your stack:
+First, pick an *alphanumeric* name for your stack:
 
 ```
-export MASTER_STACK_NAME=riskypiglet
+export CF_DEMO_ENVIRONMENT=riskypiglet
 ```
 
 The following command will create the ECR stack (which holds your application's
@@ -72,53 +76,50 @@ application will be built and pushed to this new ECR repository during the
 stack creation process.
 
 ```sh
-./infrastructure/cloud-formation/scripts/create-stacks.sh ${MASTER_STACK_NAME}
+./infrastructure/cloud-formation/scripts/create-stacks.sh ${CF_DEMO_ENVIRONMENT} [GH username] [GH repo] [GH branch] [GH token]
 ```
 
-Once your stack reaches the `CREATE_COMPLETE` state, you're ready to proceed.
-
-### 2. Configure CircleCI
-
-First, obtain the AWS secret key and AWS access key id that was provisioned for
-your stack:
+an example invocation:
 
 ```sh
-# access key id
-aws cloudformation \
-    describe-stacks \
-    --region us-east-1 \
-    --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationAccessKeyId`].OutputValue' \
-    --stack-name ${MASTER_STACK_NAME}-ecr | jq -r '.[0]'
-
-# secret access key
-aws cloudformation \
-    describe-stacks \
-    --region us-east-1 \
-    --query 'Stacks[0].Outputs[?OutputKey==`ContinuousIntegrationSecretAccessKey`].OutputValue' \
-    --stack-name ${MASTER_STACK_NAME}-ecr | jq -r '.[0]'
+./infrastructure/cloud-formation/scripts/create-stacks.sh brazenface laser cloud-formation-ecs-docker-circle-ci master tokengoeshere
 ```
 
-Then, log into CircleCI and configure a new project for your fork. When you've
-done that, add a new environment variable (see _Build Setting_ section of the
-settings screen's left-hand sidebar) called `MASTER_STACK_NAME` whose value is
-whatever you've been using in place of `${MASTER_STACK_NAME}`. Finally, add the
-AWS key id and AWS secret access key to your project's settings via the
-_Permissions_ section of the settings screen's left-hand sidebar. The next push
-you make to your GitHub-hosted repo should kick off a build (and deploy).
+Once your stack reaches the `CREATE_COMPLETE` state (it could take 30+ minutes),
+interrogate the stack outputs to obtain the web service URL and Code Pipeline
+URL. We'll use both of these values in later steps.
 
-### 3. Trigger a Build
+```sh
+export APP_URL=$(aws cloudformation \
+   describe-stacks \
+   --query 'Stacks[0].Outputs[?OutputKey==`WebServiceUrl`].OutputValue' \
+   --stack-name ${CF_DEMO_ENVIRONMENT} | jq '.[0]' | sed -e "s;\";;g")
+```
+
+```sh
+export CI_URL=$(aws cloudformation \
+   describe-stacks \
+   --query 'Stacks[0].Outputs[?OutputKey==`PipelineUrl`].OutputValue' \
+   --stack-name ${CF_DEMO_ENVIRONMENT} | jq '.[0]' | sed -e "s;\";;g")
+```
+
+### 2. Trigger a Build
 
 Simulate something that a developer would do, e.g. update the app:
 
 ```sh
 perl -e \
     'open IN, "</usr/share/dict/words";rand($.) < 1 && ($n=$_) while <IN>;print $n' \
-        | { read palabra; sed -i -e "s/\(<marquee>\).*\(<\/marquee>\)/<marquee>${palabra}<\/marquee>/g" ./app/app/views/static_pages/about.html.erb; }
+        | { read palabra; sed -i -e "s/\(<h1>\).*\(<\/h1>\)/<h1>${palabra}<\/h1>/g" ./websvc/app/views/posts/index.html.erb; }
 ```
 
-Then, simply push your changes to your repository's `master` branch. You should
-see your changes being built. Once the build is complete, ECS will perform a
-blue/green deploy to your cluster.
+Then, simply push your changes to the branch you configured in Step 1. Once the
+build is complete, ECS will perform a blue/green deploy to your cluster. You can
+follow the state of your build by navigating to the URL assigned to `${CI_URL}`:
+
+```sh
+open ${CI_URL}
+```
 
 ### 3. Interact with the Application
 
@@ -126,19 +127,13 @@ After the stack has come online, make a request to it and verify that everything
 works:
 
 ```sh
-curl -v $(aws cloudformation \
-    describe-stacks \
-    --query 'Stacks[0].Outputs[?OutputKey==`WebServiceUrl`].OutputValue' \
-    --stack-name ${MASTER_STACK_NAME} | jq '.[0]' | sed -e "s;\";;g")
+curl -v ${APP_URL}/posts
 ```
 
 ...or in a loop:
 
 ```sh
-while true; do curl -v $(aws cloudformation \
-   describe-stacks \
-   --query 'Stacks[0].Outputs[?OutputKey==`WebServiceUrl`].OutputValue' \
-   --stack-name ${MASTER_STACK_NAME} | jq '.[0]' | sed -e "s;\";;g"); sleep 1; done
+while true; do curl -v ${APP_URL}/posts; sleep 1; done
 ```
 
 Note: It can take a few minutes for a successful build to make its way to the ECS cluster.
@@ -148,7 +143,7 @@ Note: It can take a few minutes for a successful build to make its way to the EC
 To delete all the stacks you've created, run the following:
 
 ```sh
-./infrastructure/cloud-formation/delete-stacks.sh $MASTER_STACK_NAME
+./infrastructure/cloud-formation/delete-stacks.sh ${CF_DEMO_ENVIRONMENT}
 ```
 
 ### 5. Messing with the Cloud Formation Templates
@@ -157,7 +152,7 @@ If you've made changes to the Cloud Formation YAML and want to see those changes
 reflected in your stack, run the following:
 
 ```sh
-./infrastructure/cloud-formation/scripts/update-master-stack.sh ${MASTER_STACK_NAME}
+./infrastructure/cloud-formation/scripts/update-master-stack.sh ${CF_DEMO_ENVIRONMENT} [GH username] [GH repo] [GH branch] [GH token]
 ```
 
 ### TODO
@@ -167,7 +162,7 @@ reflected in your stack, run the following:
 - [ ] Route53
 - [ ] tailing (or equivalent) CloudWatch logs example
 - [ ] ensure that the ALB path is configured correctly (add more paths to app)
-- [ ] Code Pipeline + Code Deploy (or CircleCI)
+- [x] Code Pipeline + Code Deploy
 - [x] modify healthcheck to help differentiate from user requests in the logs
 - [x] RDS instance + app to read database
 - [x] provision an IAM user for CI and add AmazonEC2ContainerRegistryFullAccess policy
