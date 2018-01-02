@@ -36,7 +36,7 @@ There are a few things deliberately omitted from this repository, namely:
 To run the application in development mode:
 
 ```sh
-docker-compose -f ./app/docker-compose.yml up
+docker-compose -f ./websvc/docker-compose.yml up
 ```
 
 then, verify that the application is accessible:
