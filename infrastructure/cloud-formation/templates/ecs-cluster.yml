@@ -76,7 +76,7 @@ Resources:
                       - Name: SECRET_KEY_BASE
                         Value: !Ref RailsSecretKeyBase
                   Essential: true
-                  Image: !Sub ${RepositoryUri}:latest
+                  Image: docker.io/laser/helloworld-http:latest
                   PortMappings:
                       - ContainerPort: 4444
                   LogConfiguration:
