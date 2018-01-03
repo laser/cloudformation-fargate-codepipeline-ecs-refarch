@@ -28,12 +28,96 @@ Parameters:
         Type: String
 
 Resources:
+
+    ############################################################################
+    # ECR
+    ############################################################################
+
     ImageRepository:
-        Type: AWS::CloudFormation::Stack
+        Type: "AWS::ECR::Repository"
         Properties:
-            TemplateURL: !Sub ${S3TemplateKeyPrefix}image-repository.yml
-            Parameters:
-                RepositoryName: !Ref AWS::StackName
+            RepositoryName: !Ref AWS::StackName
+            RepositoryPolicyText:
+                Version: "2012-10-17"
+                Statement:
+                    -
+                        Sid: AllowPushPull
+                        Effect: Allow
+                        Principal:
+                            AWS:
+                                !Ref AWS::AccountId
+                        Action:
+                            - "ecr:*"
+                            - "ecr:GetAuthorizationToken"
+
+    ############################################################################
+    # RDS
+    ############################################################################
+
+    Database:
+        Type: AWS::RDS::DBInstance
+        Properties:
+            AllocatedStorage: 5
+            AutoMinorVersionUpgrade: true
+            BackupRetentionPeriod: 0
+            DBInstanceClass: db.t2.micro
+            DBName: !Ref AWS::StackName
+            VPCSecurityGroups:
+                - !Ref RDSInstanceSecurityGroup
+            DBSubnetGroupName: !GetAtt VPC.Outputs.DBSubnetGroup
+            Engine: postgres
+            EngineVersion: 9.6.5
+            MasterUsername: rinkydink
+            MasterUserPassword: smurfmagnet
+            MultiAZ: true
+
+    ############################################################################
+    # Security Groups
+    ############################################################################
+
+    RDSInstanceSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: !Ref VPC
+            GroupDescription: Access to the RDS instance
+            SecurityGroupIngress:
+                # Only allow inbound access to RDS from ECS. This will need to
+                # change if we add a bastion host.
+                - SourceSecurityGroupId: !Ref ECSServicesSecurityGroup
+                  IpProtocol: -1
+            Tags:
+                - Key: Name
+                  Value: !Sub ${AWS::StackName}-RDS-Instances
+
+    ECSServicesSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: !Ref VPC
+            GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
+            SecurityGroupIngress:
+                # Only allow inbound access to ECS from the ELB
+                - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+                  IpProtocol: -1
+            Tags:
+                - Key: Name
+                  Value: !Sub ${AWS::StackName}-ECS-Services
+
+    LoadBalancerSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: !Ref VPC
+            GroupDescription: Access to the load balancer that sits in front of ECS
+            SecurityGroupIngress:
+                # Allow access from anywhere to our ECS services
+                - CidrIp: 0.0.0.0/0
+                  IpProtocol: -1
+            Tags:
+                - Key: Name
+                  Value: !Sub ${AWS::StackName}-LoadBalancers
+
+    ############################################################################
+    # Security Groups
+    ############################################################################
 
     VPC:
         Type: AWS::CloudFormation::Stack
@@ -47,14 +131,6 @@ Resources:
                 PrivateSubnet1CIDR: 10.0.20.0/24
                 PrivateSubnet2CIDR: 10.0.21.0/24
 
-    SecurityGroups:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: !Sub ${S3TemplateKeyPrefix}security-groups.yml
-            Parameters:
-                EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
-
     ALB:
         Type: AWS::CloudFormation::Stack
         Properties:
@@ -63,16 +139,9 @@ Resources:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+                SecurityGroup: !Ref LoadBalancerSecurityGroup
 
-    Database:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: !Sub ${S3TemplateKeyPrefix}database.yml
-            Parameters:
-                EnvironmentName: !Ref AWS::StackName
-                DBSecurityGroup: !GetAtt SecurityGroups.Outputs.RDSInstanceSecurityGroup
-                DBSubnetGroupName: !GetAtt VPC.Outputs.DBSubnetGroup
+
 
     EcsCluster:
         Type: AWS::CloudFormation::Stack
@@ -83,8 +152,8 @@ Resources:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
                 Listener: !GetAtt ALB.Outputs.Listener
-                ECSServicesSecurityGroup: !GetAtt SecurityGroups.Outputs.ECSServicesSecurityGroup
-                DBURL: !GetAtt Database.Outputs.DBURL
+                ECSServicesSecurityGroup: !Ref ECSServicesSecurityGroup
+                DBURL: !Sub postgresql://rinkydink:smurfmagnet@${Database.Endpoint.Address}:${Database.Endpoint.Port}/${AWS::StackName}
                 RailsSecretKeyBase: !Ref RailsSecretKeyBase
 
     DeploymentPipeline:
@@ -95,8 +164,8 @@ Resources:
                 EnvironmentName: !Ref AWS::StackName
                 ClusterName: !GetAtt EcsCluster.Outputs.EcsClusterName
                 ServiceArn: !GetAtt EcsCluster.Outputs.EcsServiceArn
-                RepositoryArn: !GetAtt ImageRepository.Outputs.RepositoryArn
-                RepositoryUri: !GetAtt ImageRepository.Outputs.RepositoryUri
+                RepositoryArn: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ImageRepository}
+                RepositoryUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ImageRepository}
                 GitHubUser: !Ref GitHubUser
                 GitHubBranch: !Ref GitHubBranch
                 GitHubRepo: !Ref GitHubRepo

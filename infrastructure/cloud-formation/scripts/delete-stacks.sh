@@ -1,8 +1,6 @@
 #!/bin/bash
 set -ex
 
-. ./infrastructure/cloud-formation/scripts/shared-functions.sh --source-only
-
 ENV_NAME_ARG=$1
 
 MAIN_STACK_NAME=${ENV_NAME_ARG}
@@ -34,8 +32,8 @@ aws cloudformation delete-stack --stack-name ${ENV_NAME_ARG}-ecr || true
 aws cloudformation delete-stack --stack-name ${ENV_NAME_ARG}-template-storage || true
 aws cloudformation delete-stack --stack-name ${ENV_NAME_ARG} || true
 
-aws cloudformation wait stack-delete-complete ${ECR_STACK_NAME}
-aws cloudformation wait stack-delete-complete ${TEMPLATE_STORAGE_STACK_NAME}
-aws cloudformation wait stack-delete-complete ${MAIN_STACK_NAME}
+aws cloudformation wait stack-delete-complete --stack-name ${ECR_STACK_NAME}
+aws cloudformation wait stack-delete-complete --stack-name ${TEMPLATE_STORAGE_STACK_NAME}
+aws cloudformation wait stack-delete-complete --stack-name ${MAIN_STACK_NAME}
 
 echo "$(date):${0##*/}:success"
