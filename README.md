@@ -152,7 +152,7 @@ If you've made changes to the Cloud Formation YAML and want to see those changes
 reflected in your stack, run the following:
 
 ```sh
-./infrastructure/cloud-formation/scripts/update-master-stack.sh ${CF_DEMO_ENVIRONMENT}
+./infrastructure/cloud-formation/scripts/update-master-stack.sh ${CF_DEMO_ENVIRONMENT} [GH username] [GH repo] [GH branch] [GH token]
 ```
 
 ### TODO

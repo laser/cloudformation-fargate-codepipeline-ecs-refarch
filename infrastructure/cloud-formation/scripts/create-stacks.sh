@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ex
 
+. ./infrastructure/cloud-formation/scripts/shared-functions.sh --source-only
+
 ENV_NAME_ARG=$1
 GITHUB_USERNAME=$2
 GITHUB_REPO=$3
@@ -15,14 +17,26 @@ GITHUB_TOKEN=$5
 REPOSITORY_STACK_NAME=${ENV_NAME_ARG}-ecr
 BUCKET_STACK_NAME=${ENV_NAME_ARG}-template-storage
 
-aws cloudformation deploy --stack-name ${REPOSITORY_STACK_NAME} \
+aws cloudformation create-stack --stack-name ${REPOSITORY_STACK_NAME} \
     --capabilities CAPABILITY_NAMED_IAM CAPABILITY_IAM \
-    --template-file ./infrastructure/cloud-formation/templates/image-repository.yml \
-    --parameter-overrides RepositoryName=${ENV_NAME_ARG}
+    --template-body file://./infrastructure/cloud-formation/templates/image-repository.yml \
+    --parameters ParameterKey=RepositoryName,ParameterValue=${ENV_NAME_ARG}
 
-aws cloudformation deploy --stack-name ${BUCKET_STACK_NAME} \
-    --template-file ./infrastructure/cloud-formation/templates/template-storage.yml \
-    --parameter-overrides BucketName=${ENV_NAME_ARG}
+aws cloudformation create-stack --stack-name ${BUCKET_STACK_NAME} \
+    --template-body file://./infrastructure/cloud-formation/templates/template-storage.yml \
+    --parameters ParameterKey=BucketName,ParameterValue=${ENV_NAME_ARG}
+
+set +x
+until stack_create_complete ${REPOSITORY_STACK_NAME}; do
+    echo "$(date):${REPOSITORY_STACK_NAME}:$(get_stack_status ${REPOSITORY_STACK_NAME})"
+    sleep 1
+done
+
+until stack_create_complete ${BUCKET_STACK_NAME}; do
+    echo "$(date):${BUCKET_STACK_NAME}:$(get_stack_status ${BUCKET_STACK_NAME})"
+    sleep 1
+done
+set -x
 
 
 ###############################################################################
@@ -65,19 +79,22 @@ REPOSITORY_ARN=$(aws ecr \
     --query "repositories[?repositoryName==\`${ENV_NAME_ARG}\`].repositoryArn" \
     | jq -r '.[0]')
 
-#aws cloudformation create-stack --stack-name ${ENV_NAME_ARG} \
-aws cloudformation deploy \
-    --stack-name ${ENV_NAME_ARG} \
+aws cloudformation create-stack --stack-name ${ENV_NAME_ARG} \
     --capabilities CAPABILITY_NAMED_IAM CAPABILITY_IAM \
-    --template-file ./infrastructure/cloud-formation/templates/master.yml \
-    --parameter-overrides \
-        GitHubRepo=${GITHUB_REPO}\
-        GitHubToken=${GITHUB_TOKEN} \
-        GitHubUser=${GITHUB_USERNAME} \
-        GitHubBranch=${GITHUB_BRANCH} \
-        RepositoryUri=${REPOSITORY_URI} \
-        RepositoryArn=${REPOSITORY_ARN} \
-        RailsSecretKeyBase=${RAILS_SECRET_KEY_BASE} \
-        S3TemplateKeyPrefix=https://s3.amazonaws.com/${ENV_NAME_ARG}/infrastructure/cloud-formation/templates/
+    --template-body file://./infrastructure/cloud-formation/templates/master.yml \
+    --parameters \
+        ParameterKey=GitHubRepo,ParameterValue=${GITHUB_REPO}\
+        ParameterKey=GitHubToken,ParameterValue=${GITHUB_TOKEN} \
+        ParameterKey=GitHubUser,ParameterValue=${GITHUB_USERNAME} \
+        ParameterKey=GitHubBranch,ParameterValue=${GITHUB_BRANCH} \
+        ParameterKey=RepositoryUri,ParameterValue=${REPOSITORY_URI} \
+        ParameterKey=RepositoryArn,ParameterValue=${REPOSITORY_ARN} \
+        ParameterKey=RailsSecretKeyBase,ParameterValue=${RAILS_SECRET_KEY_BASE} \
+        ParameterKey=S3TemplateKeyPrefix,ParameterValue=https://s3.amazonaws.com/${ENV_NAME_ARG}/infrastructure/cloud-formation/templates/
+
+until stack_create_complete $ENV_NAME_ARG; do
+    echo "$(date):${ENV_NAME_ARG}:$(get_stack_status ${ENV_NAME_ARG})"
+    sleep 1
+done
 
 echo "$(date):${0##*/}:success"
