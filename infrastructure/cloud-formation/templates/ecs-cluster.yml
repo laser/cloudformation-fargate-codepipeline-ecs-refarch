@@ -16,8 +16,6 @@ Parameters:
         Type: AWS::EC2::SecurityGroup::Id
     DBURL:
         Type: String
-    RepositoryUri:
-        Type: String
     RailsSecretKeyBase:
         Type: String
 

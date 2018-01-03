@@ -12,7 +12,7 @@ Parameters:
 
 Resources:
 
-    DemoRepository:
+    Repository:
         Type: "AWS::ECR::Repository"
         Properties:
             RepositoryName: !Ref RepositoryName
@@ -28,3 +28,11 @@ Resources:
                         Action:
                             - "ecr:*"
                             - "ecr:GetAuthorizationToken"
+
+Outputs:
+
+    RepositoryArn:
+        Value: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${Repository}
+
+    RepositoryUri:
+        Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Repository}

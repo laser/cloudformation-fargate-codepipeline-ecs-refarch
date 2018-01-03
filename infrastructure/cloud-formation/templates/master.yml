@@ -24,14 +24,17 @@ Parameters:
         Type: String
     GitHubToken:
         Type: String
-    RepositoryUri:
-        Type: String
-    RepositoryArn:
-        Type: String
     RailsSecretKeyBase:
         Type: String
 
 Resources:
+    ImageRepository:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: !Sub ${S3TemplateKeyPrefix}image-repository.yml
+            Parameters:
+                RepositoryName: !Ref AWS::StackName
+
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
@@ -76,7 +79,6 @@ Resources:
         Properties:
             TemplateURL: !Sub ${S3TemplateKeyPrefix}ecs-cluster.yml
             Parameters:
-                RepositoryUri: !Ref RepositoryUri
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -93,8 +95,8 @@ Resources:
                 EnvironmentName: !Ref AWS::StackName
                 ClusterName: !GetAtt EcsCluster.Outputs.EcsClusterName
                 ServiceArn: !GetAtt EcsCluster.Outputs.EcsServiceArn
-                RepositoryArn: !Ref RepositoryArn
-                RepositoryUri: !Ref RepositoryUri
+                RepositoryArn: !GetAtt ImageRepository.Outputs.RepositoryArn
+                RepositoryUri: !GetAtt ImageRepository.Outputs.RepositoryUri
                 GitHubUser: !Ref GitHubUser
                 GitHubBranch: !Ref GitHubBranch
                 GitHubRepo: !Ref GitHubRepo
@@ -104,7 +106,7 @@ Outputs:
 
     WebServiceUrl:
         Description: The URL of the load balancer
-        Value: !GetAtt ALB.Outputs.LoadBalancerUrl
+        Value: !Sub http://${ALB.Outputs.LoadBalancerUrl}
 
     PipelineUrl:
         Description: The continuous deployment pipeline in the AWS Management Console.

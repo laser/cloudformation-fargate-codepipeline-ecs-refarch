@@ -34,11 +34,8 @@ aws cloudformation delete-stack --stack-name ${ENV_NAME_ARG}-ecr || true
 aws cloudformation delete-stack --stack-name ${ENV_NAME_ARG}-template-storage || true
 aws cloudformation delete-stack --stack-name ${ENV_NAME_ARG} || true
 
-until stack_delete_complete ${ECR_STACK_NAME} && stack_delete_complete ${TEMPLATE_STORAGE_STACK_NAME} && stack_delete_complete ${MAIN_STACK_NAME}; do
-    echo "$(date):${ECR_STACK_NAME}:$(get_stack_status ${ECR_STACK_NAME})"
-    echo "$(date):${TEMPLATE_STORAGE_STACK_NAME}:$(get_stack_status ${TEMPLATE_STORAGE_STACK_NAME})"
-    echo "$(date):${MAIN_STACK_NAME}:$(get_stack_status ${MAIN_STACK_NAME})"
-    sleep 1
-done
+aws cloudformation wait stack-delete-complete ${ECR_STACK_NAME}
+aws cloudformation wait stack-delete-complete ${TEMPLATE_STORAGE_STACK_NAME}
+aws cloudformation wait stack-delete-complete ${MAIN_STACK_NAME}
 
 echo "$(date):${0##*/}:success"
