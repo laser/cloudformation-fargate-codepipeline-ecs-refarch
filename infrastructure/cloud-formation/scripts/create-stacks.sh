@@ -1,8 +1,6 @@
 #!/bin/bash
 set -ex
 
-. ./infrastructure/cloud-formation/scripts/shared-functions.sh --source-only
-
 ENV_NAME_ARG=$1
 GITHUB_USERNAME=$2
 GITHUB_REPO=$3
