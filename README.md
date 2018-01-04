@@ -63,7 +63,7 @@ The token must have access to the `repo` scope. Store this token somewhere.
 
 ### 1. Create the Stacks
 
-First, pick an *alphanumeric* name for your stack:
+First, pick an globally unique, *alphanumeric* name for your stack:
 
 ```
 export CF_DEMO_ENVIRONMENT=riskypiglet
