@@ -14,7 +14,9 @@ TEMPLATE_STORAGE_STACK_NAME=${ENV_NAME_ARG}-template-storage
 # this must happen first.
 #
 
-aws s3 rb s3://${ENV_NAME_ARG} --force || true
+if aws s3 ls s3://${ENV_NAME_ARG}; then
+    aws s3 rb s3://${ENV_NAME_ARG} --force || true
+fi
 
 
 ###############################################################################
@@ -22,18 +24,28 @@ aws s3 rb s3://${ENV_NAME_ARG} --force || true
 # the stack which provisoined the ECR is deleted.
 #
 
-aws ecr delete-repository --repository-name ${ENV_NAME_ARG} --force || true
+if aws ecr describe-repositories --repository-names ${ENV_NAME_ARG}; then
+    aws ecr delete-repository --repository-name ${ENV_NAME_ARG} --force || true
+fi
+
 
 ###############################################################################
 # Delete all the stacks we've created.
 #
 
-aws cloudformation delete-stack --stack-name ${ENV_NAME_ARG}-ecr || true
-aws cloudformation delete-stack --stack-name ${ENV_NAME_ARG}-template-storage || true
-aws cloudformation delete-stack --stack-name ${ENV_NAME_ARG} || true
+if aws cloudformation describe-stacks --stack-name ${ECR_STACK_NAME}; then
+    aws cloudformation delete-stack --stack-name ${ECR_STACK_NAME} || true
+    aws cloudformation wait stack-delete-complete --stack-name ${ECR_STACK_NAME}
+fi
 
-aws cloudformation wait stack-delete-complete --stack-name ${ECR_STACK_NAME}
-aws cloudformation wait stack-delete-complete --stack-name ${TEMPLATE_STORAGE_STACK_NAME}
-aws cloudformation wait stack-delete-complete --stack-name ${MAIN_STACK_NAME}
+if aws cloudformation describe-stacks --stack-name ${TEMPLATE_STORAGE_STACK_NAME}; then
+    aws cloudformation delete-stack --stack-name ${TEMPLATE_STORAGE_STACK_NAME} || true
+    aws cloudformation wait stack-delete-complete --stack-name ${TEMPLATE_STORAGE_STACK_NAME}
+fi
 
-echo "$(date):${0##*/}:success"
+if aws cloudformation describe-stacks --stack-name ${MAIN_STACK_NAME}; then
+    aws cloudformation delete-stack --stack-name ${MAIN_STACK_NAME} || true
+    aws cloudformation wait stack-delete-complete --stack-name ${MAIN_STACK_NAME}
+fi
+
+echo "$(date):create:${ENV_NAME_ARG}:success"

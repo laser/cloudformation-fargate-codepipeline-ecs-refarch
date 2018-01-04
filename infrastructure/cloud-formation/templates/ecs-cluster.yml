@@ -18,6 +18,7 @@ Parameters:
         Type: String
     RailsSecretKeyBase:
         Type: String
+        Default: 30f283aa65c8f1d73073812fedab59d3b46ba81a42c366f26dddefd3db7c6ec45c2ba32b432c375f583f4b13df533662256e6537671a25bc5a6013205a48a3aa
 
 Resources:
 

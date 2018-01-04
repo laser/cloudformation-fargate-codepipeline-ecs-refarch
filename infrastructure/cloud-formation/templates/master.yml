@@ -24,8 +24,6 @@ Parameters:
         Type: String
     GitHubToken:
         Type: String
-    RailsSecretKeyBase:
-        Type: String
 
 Resources:
     ImageRepository:
@@ -85,7 +83,6 @@ Resources:
                 Listener: !GetAtt ALB.Outputs.Listener
                 ECSServicesSecurityGroup: !GetAtt SecurityGroups.Outputs.ECSServicesSecurityGroup
                 DBURL: !GetAtt Database.Outputs.DBURL
-                RailsSecretKeyBase: !Ref RailsSecretKeyBase
 
     DeploymentPipeline:
         Type: AWS::CloudFormation::Stack

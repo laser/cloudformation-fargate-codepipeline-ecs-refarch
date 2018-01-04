@@ -47,9 +47,9 @@ curl -v 'http://localhost:3333'
 
 ## Deploying to AWS + CI
 
-### 0. Tools and Dependencies
+### 0. Prerequisites
 
-- [Docker Compose](https://docs.docker.com/compose/)
+- [Docker and Docker Compose](https://docs.docker.com/compose/)
 - [AWS CLI](https://github.com/aws/aws-cli) version >= `1.14.11` configured to use the `us-east-1` as its default region (for Fargate support)
 - [jq](https://github.com/stedolan/jq) version >= `jq-1.5`, for querying stack output-JSON
 - an AWS [access key id and secret access key](http://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html) which has admin-level permissions for your AWS account
@@ -76,13 +76,13 @@ application will be built and pushed to this new ECR repository during the
 stack creation process.
 
 ```sh
-./infrastructure/cloud-formation/scripts/create-stacks.sh ${CF_DEMO_ENVIRONMENT} [GH username] [GH repo] [GH branch] [GH token]
+./infrastructure/cloud-formation/scripts/deploy.sh ${CF_DEMO_ENVIRONMENT} [GH username] [GH repo] [GH branch] [GH token]
 ```
 
 an example invocation:
 
 ```sh
-./infrastructure/cloud-formation/scripts/create-stacks.sh brazenface laser cloud-formation-ecs-docker-circle-ci master tokengoeshere
+./infrastructure/cloud-formation/scripts/deploy.sh brazenface laser cloud-formation-ecs-docker-circle-ci master tokengoeshere
 ```
 
 Once your stack reaches the `CREATE_COMPLETE` state (it could take 30+ minutes),
@@ -152,12 +152,12 @@ If you've made changes to the Cloud Formation YAML and want to see those changes
 reflected in your stack, run the following:
 
 ```sh
-./infrastructure/cloud-formation/scripts/update-master-stack.sh ${CF_DEMO_ENVIRONMENT} [GH username] [GH repo] [GH branch] [GH token]
+./infrastructure/cloud-formation/scripts/deploy.sh ${CF_DEMO_ENVIRONMENT} [GH username] [GH repo] [GH branch] [GH token]
 ```
 
 ### TODO
 
-- [ ] replace embedded app with Rails
+- [x] replace embedded app with Rails
 - [ ] SSL
 - [ ] Route53
 - [ ] tailing (or equivalent) CloudWatch logs example
@@ -168,13 +168,3 @@ reflected in your stack, run the following:
 - [x] provision an IAM user for CI and add AmazonEC2ContainerRegistryFullAccess policy
 - [x] deploy script should get container and task family names from stack output
 - [x] one-off task to run migrations before updating service
-
-### Blog Post
-- [ ] COPY versus VOLUME during dev
-- [ ] docker-entrypoint.sh reads environment variables for decision to run migrations
-- [ ] attaching a debugger to the app
-- [ ] running multiple (local) instances with Docker Compose
-- [ ] deploys with downtime
-- [ ] secrets in an S3 bucket
-- [ ] ENTRYPOINT shell versus exec form and interaction with Docker Compose
-- [ ] CircleCI executor types (machine versus docker)
