@@ -1,0 +1,19 @@
+
+version: "2"
+services:
+  tests:
+    build: .
+    environment:
+      - RAILS_ENV=test
+      - DATABASE_URL=postgresql://tattersail:whiskeyjack@websvcdb:5432/websvcdb
+      - PORT=3000
+    depends_on:
+      - websvcdb
+    command:
+        - "ruby ./wait-for-postgres.rb              && rails db:migrate              && rails db:test:prepare              && rails test"
+  websvcdb:
+    image: postgres:9.6.5-alpine
+    environment:
+      - POSTGRES_USER=tattersail
+      - POSTGRES_PASSWORD=whiskeyjack
+      - POSTGRES_DB=websvcdb
