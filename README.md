@@ -1,6 +1,6 @@
 # cloud-formation-ecs-docker-circle-ci
 
-![aws ecs reference architecture 2](https://user-images.githubusercontent.com/884507/34399624-d24950fe-eb3d-11e7-8c28-80afee284d53.png)
+![meow](https://user-images.githubusercontent.com/884507/34551896-a3a838a6-f0d2-11e7-8858-c4de887fb225.png)
 
 ## What's the Point?
 
