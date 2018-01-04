@@ -1,4 +1,4 @@
-# cloud-formation-ecs-docker-circle-ci
+# cloud-formation-ecs-docker-codepipeline-rds-etc
 
 ![meow](https://user-images.githubusercontent.com/884507/34551896-a3a838a6-f0d2-11e7-8858-c4de887fb225.png)
 
