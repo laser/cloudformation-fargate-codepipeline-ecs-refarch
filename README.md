@@ -42,7 +42,7 @@ docker-compose -f ./websvc/docker-compose.yml up
 then, verify that the application is accessible:
 
 ```sh
-curl -v 'http://localhost:3333'
+curl -v 'http://localhost:3333/posts'
 ```
 
 ## Deploying to AWS + CI
