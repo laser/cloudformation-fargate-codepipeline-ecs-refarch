@@ -10,7 +10,10 @@ services:
     depends_on:
       - websvcdb
     command:
-        - "ruby ./wait-for-postgres.rb              && rails db:migrate              && rails db:test:prepare              && rails test"
+        - "ruby ./wait-for-postgres.rb \
+            && rails db:migrate \
+            && rails db:test:prepare \
+            && rails test"
   websvcdb:
     image: postgres:9.6.5-alpine
     environment:
