@@ -34,6 +34,9 @@ Resources:
             Cluster: !Ref Cluster
             LaunchType: FARGATE
             DesiredCount: 2
+            DeploymentConfiguration:
+                MaximumPercent: 150
+                MinimumHealthyPercent: 100
             TaskDefinition: !Ref TaskDefinition
             NetworkConfiguration:
                 AwsvpcConfiguration:
