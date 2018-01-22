@@ -27,49 +27,26 @@ Resources:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-RDS-Instances
 
-    # This security group defines who/where is allowed to access the ECS
-    # containers. By default we're just allowing access from the ALB.  If you
-    # want to expose non-load balanced services, you can open their ports here.
-
     ECSServicesSecurityGroup:
         Type: AWS::EC2::SecurityGroup
         Properties:
             VpcId: !Ref VPC
             GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
             SecurityGroupIngress:
-                # Only allow inbound access to ECS from the ELB
-                - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
-                  IpProtocol: -1
+                # Allow access from anywhere to our ECS services
+                - CidrIp: 0.0.0.0/0
+                  FromPort: 4444
+                  ToPort: 4444
+                  IpProtocol: tcp
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-ECS-Services
-
-    # This security group defines who/where is allowed to access the ALB. By
-    # default, we've opened this up to the public internet (0.0.0.0/0) but can
-    # you restrict it further if you want.
-
-    LoadBalancerSecurityGroup:
-        Type: AWS::EC2::SecurityGroup
-        Properties:
-            VpcId: !Ref VPC
-            GroupDescription: Access to the load balancer that sits in front of ECS
-            SecurityGroupIngress:
-                # Allow access from anywhere to our ECS services
-                - CidrIp: 0.0.0.0/0
-                  IpProtocol: -1
-            Tags:
-                - Key: Name
-                  Value: !Sub ${EnvironmentName}-LoadBalancers
 
 Outputs:
 
     ECSServicesSecurityGroup:
         Description: A reference to the security group for ECS hosts
         Value: !Ref ECSServicesSecurityGroup
-
-    LoadBalancerSecurityGroup:
-        Description: A reference to the security group for load balancers
-        Value: !Ref LoadBalancerSecurityGroup
 
     RDSInstanceSecurityGroup:
         Description: A reference to the security group for the RDS instance

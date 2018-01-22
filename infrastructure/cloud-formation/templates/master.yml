@@ -60,51 +60,51 @@ Resources:
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
-                Subnets: !GetAtt VPC.Outputs.PublicSubnets
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+                PublicSubnets: !GetAtt VPC.Outputs.PublicSubnets
 
-    Database:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: !Sub ${S3TemplateKeyPrefix}database.yml
-            Parameters:
-                EnvironmentName: !Ref AWS::StackName
-                DBSecurityGroup: !GetAtt SecurityGroups.Outputs.RDSInstanceSecurityGroup
-                DBSubnetGroupName: !GetAtt VPC.Outputs.DBSubnetGroup
+    # Database:
+    #     Type: AWS::CloudFormation::Stack
+    #     Properties:
+    #         TemplateURL: !Sub ${S3TemplateKeyPrefix}database.yml
+    #         Parameters:
+    #             EnvironmentName: !Ref AWS::StackName
+    #             DBSecurityGroup: !GetAtt SecurityGroups.Outputs.RDSInstanceSecurityGroup
+    #             DBSubnetGroupName: !GetAtt VPC.Outputs.DBSubnetGroup
 
     EcsCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: !Sub ${S3TemplateKeyPrefix}ecs-cluster.yml
             Parameters:
-                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+                PrivateSubnets: !GetAtt VPC.Outputs.PrivateSubnets
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
                 Listener: !GetAtt ALB.Outputs.Listener
                 ECSServicesSecurityGroup: !GetAtt SecurityGroups.Outputs.ECSServicesSecurityGroup
-                DBURL: !GetAtt Database.Outputs.DBURL
+                DBURL: "postgresql://flarp:flarp@flarp/flarp"
+                TargetGroup: !GetAtt ALB.Outputs.TargetGroup
 
-    DeploymentPipeline:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: !Sub ${S3TemplateKeyPrefix}deployment-pipeline.yml
-            Parameters:
-                EnvironmentName: !Ref AWS::StackName
-                ClusterName: !GetAtt EcsCluster.Outputs.EcsClusterName
-                ServiceArn: !GetAtt EcsCluster.Outputs.EcsServiceArn
-                RepositoryArn: !GetAtt ImageRepository.Outputs.RepositoryArn
-                RepositoryUri: !GetAtt ImageRepository.Outputs.RepositoryUri
-                GitHubUser: !Ref GitHubUser
-                GitHubBranch: !Ref GitHubBranch
-                GitHubRepo: !Ref GitHubRepo
-                GitHubToken: !Ref GitHubToken
+    # DeploymentPipeline:
+    #     Type: AWS::CloudFormation::Stack
+    #     Properties:
+    #         TemplateURL: !Sub ${S3TemplateKeyPrefix}deployment-pipeline.yml
+    #         Parameters:
+    #             EnvironmentName: !Ref AWS::StackName
+    #             ClusterName: !GetAtt EcsCluster.Outputs.EcsClusterName
+    #             ServiceArn: !GetAtt EcsCluster.Outputs.EcsServiceArn
+    #             RepositoryArn: !GetAtt ImageRepository.Outputs.RepositoryArn
+    #             RepositoryUri: !GetAtt ImageRepository.Outputs.RepositoryUri
+    #             GitHubUser: !Ref GitHubUser
+    #             GitHubBranch: !Ref GitHubBranch
+    #             GitHubRepo: !Ref GitHubRepo
+    #             GitHubToken: !Ref GitHubToken
 
 Outputs:
 
     WebServiceUrl:
         Description: The URL of the load balancer
         Value: !Sub http://${ALB.Outputs.LoadBalancerUrl}
-
-    PipelineUrl:
-        Description: The continuous deployment pipeline in the AWS Management Console.
-        Value: !GetAtt DeploymentPipeline.Outputs.PipelineUrl
+    #
+    # PipelineUrl:
+    #     Description: The continuous deployment pipeline in the AWS Management Console.
+    #     Value: !GetAtt DeploymentPipeline.Outputs.PipelineUrl
