@@ -38,6 +38,10 @@ Resources:
                   FromPort: 4444
                   ToPort: 4444
                   IpProtocol: tcp
+                - CidrIp: 0.0.0.0/0
+                  FromPort: 22
+                  ToPort: 22
+                  IpProtocol: tcp
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-ECS-Services

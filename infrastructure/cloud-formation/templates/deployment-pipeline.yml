@@ -6,6 +6,8 @@ Parameters:
     Type: String
   ServiceArn:
     Type: String
+  SshServiceArn:
+    Type: String
   RepositoryArn:
     Type: String
   RepositoryUri:
@@ -126,9 +128,12 @@ Resources:
             post_build:
               commands:
                 - docker push "$IMAGE_URI"
-                - printf '[{"name":"${EnvironmentName}","imageUri":"%s"}]' "$IMAGE_URI" > images.json
+                - printf '[ {"name":"${EnvironmentName}","imageUri":"%s"} ]' "$IMAGE_URI" > images.json
+                - printf '[ {"name":"SSH-${EnvironmentName}","imageUri":"%s"} ]' "$IMAGE_URI" > images-ssh.json
           artifacts:
-            files: images.json
+            files:
+              - images.json
+              - images-ssh.json
       Environment:
         ComputeType: "BUILD_GENERAL1_SMALL"
         Image: "aws/codebuild/docker:1.12.1"
@@ -181,7 +186,20 @@ Resources:
               RunOrder: 1
         - Name: Deploy
           Actions:
-            - Name: Deploy
+            - Name: DeploySSHService
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: ECS
+              Configuration:
+                ClusterName: !Ref ClusterName
+                ServiceName: !Ref SshServiceArn
+                FileName: images-ssh.json
+              InputArtifacts:
+                - Name: BuildOutput
+              RunOrder: 1
+            - Name: DeployService
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -193,7 +211,7 @@ Resources:
                 FileName: images.json
               InputArtifacts:
                 - Name: BuildOutput
-              RunOrder: 1
+              RunOrder: 2
 
 Outputs:
   PipelineUrl:

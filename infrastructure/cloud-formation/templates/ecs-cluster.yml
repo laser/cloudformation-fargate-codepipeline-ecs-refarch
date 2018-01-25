@@ -6,8 +6,6 @@ Parameters:
 
     VPC:
         Type: AWS::EC2::VPC::Id
-    Listener:
-        Type: String
     EnvironmentName:
         Type: String
     PrivateSubnets:
@@ -21,6 +19,8 @@ Parameters:
         Default: 30f283aa65c8f1d73073812fedab59d3b46ba81a42c366f26dddefd3db7c6ec45c2ba32b432c375f583f4b13df533662256e6537671a25bc5a6013205a48a3aa
     TargetGroup:
         Type: String
+    SSHTargetGroup:
+        Type: String
 
 Resources:
 
@@ -28,6 +28,50 @@ Resources:
         Type: AWS::ECS::Cluster
         Properties:
             ClusterName: !Ref EnvironmentName
+
+    SSHService:
+        Type: AWS::ECS::Service
+        Properties:
+            Cluster: !Ref Cluster
+            LaunchType: FARGATE
+            DesiredCount: 1
+            DeploymentConfiguration:
+                MaximumPercent: 100
+                MinimumHealthyPercent: 0
+            TaskDefinition: !Ref SSHTaskDefinition
+            NetworkConfiguration:
+                AwsvpcConfiguration:
+                    Subnets: !Ref PrivateSubnets
+                    AssignPublicIp: ENABLED
+                    SecurityGroups:
+                        - !Ref ECSServicesSecurityGroup
+            LoadBalancers:
+                - ContainerName: !Sub SSH-${EnvironmentName}
+                  ContainerPort: 22
+                  TargetGroupArn: !Ref SSHTargetGroup
+
+    SSHTaskDefinition:
+        Type: AWS::ECS::TaskDefinition
+        Properties:
+            TaskRoleArn: !GetAtt TaskExecutionRole.Arn
+            ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+            Cpu: 256
+            Memory: 512
+            Family: !Sub SSH-${EnvironmentName}
+            NetworkMode: awsvpc
+            RequiresCompatibilities:
+                - FARGATE
+            ContainerDefinitions:
+                - Name: !Sub SSH-${EnvironmentName}
+                  EntryPoint:
+                      - "/bin/ash"
+                      - "-c"
+                  Command:
+                      - "ssh-keygen -A && exec /usr/sbin/sshd -D -e"
+                  Essential: true
+                  Image: sickp/alpine-sshd:7.5
+                  PortMappings:
+                      - ContainerPort: 22
 
     Service:
         Type: AWS::ECS::Service
@@ -115,6 +159,10 @@ Outputs:
     EcsServiceArn:
         Description: A reference to the created ECS service ARN
         Value: !Ref Service
+
+    SshEcsServiceArn:
+        Description: A reference to the created ECS service ARN (for SSH)
+        Value: !Ref SSHService
 
     EcsClusterName:
         Description: A reference to the created ECS service ARN
