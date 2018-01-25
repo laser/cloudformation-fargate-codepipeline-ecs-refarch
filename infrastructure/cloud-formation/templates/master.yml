@@ -80,7 +80,7 @@ Resources:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
                 ECSServicesSecurityGroup: !GetAtt SecurityGroups.Outputs.ECSServicesSecurityGroup
-                DBURL: "postgresql://flarp:flarp@flarp/flarp"
+                DBURL: !GetAtt Database.Outputs.DBURL
                 TargetGroup: !GetAtt ALB.Outputs.TargetGroup
                 SSHTargetGroup: !GetAtt ALB.Outputs.SSHTargetGroup
 
